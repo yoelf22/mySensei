@@ -16,9 +16,7 @@ async function main() {
     process.exit(1);
   }
   const transport = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    service: "gmail",
     auth: { user: from, pass },
   });
   await transport.sendMail({

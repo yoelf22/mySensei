@@ -71,6 +71,30 @@ cd ..
 gh variable set QUIZ_WEBHOOK_URL --body "https://mysensei-quiz-helper.<you>.workers.dev"
 ```
 
+## 4b. Lesson hosting (Cloudflare Pages)
+
+Lessons are published to Cloudflare Pages and emailed as a one-click link (the repo
+stays private). One-time:
+
+1. **Create a Cloudflare API token** with Pages edit rights: Cloudflare dashboard →
+   My Profile → API Tokens → Create Token → Custom token → Permissions:
+   **Account · Cloudflare Pages · Edit**. Copy it, then:
+   ```
+   gh secret set CLOUDFLARE_API_TOKEN     # paste the token, hidden
+   ```
+   (`CLOUDFLARE_ACCOUNT_ID` is already set as a repo variable.)
+2. **Create the Pages project** (you're already wrangler-authed):
+   ```
+   cd ~/Desktop/mySensei && npx wrangler pages project create mysensei-lessons --production-branch=main
+   ```
+   This gives you the site URL, `https://mysensei-lessons.pages.dev` (or a variant).
+3. **Record the site URL** so emails can link to it:
+   ```
+   gh variable set LESSONS_BASE_URL --body "https://mysensei-lessons.pages.dev"
+   ```
+
+The cadence workflow then publishes each lesson to Pages before emailing the link.
+
 ## 5. Send the first lesson
 
 GitHub Actions → **cadence** → **Run workflow** (keep "force" checked) sends one

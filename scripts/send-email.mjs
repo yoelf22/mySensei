@@ -46,6 +46,27 @@ async function main() {
   const lesson = curriculum.progress.delivered.at(-1) || {};
   const subjectLine = `mySensei · ${curriculum.subject} · lesson ${lesson.module ?? ""}`.trim();
 
+  const base = (process.env.LESSONS_BASE_URL || "").replace(/\/+$/, "");
+  if (base) {
+    // Hosted-link delivery (lesson is published to Cloudflare Pages).
+    const url = `${base}/${path.basename(relPath)}`;
+    await transport.sendMail({
+      from,
+      to,
+      subject: subjectLine,
+      text:
+        `Your next mySensei lesson on "${curriculum.subject}":\n\n${url}\n\n` +
+        `Open it in any browser, read it, and take the quiz at the bottom.\n`,
+      html:
+        `<p>Your next mySensei lesson on "<b>${curriculum.subject}</b>":</p>` +
+        `<p><a href="${url}">${url}</a></p>` +
+        `<p>Open it in any browser, read it, and take the quiz at the bottom.</p>`,
+    });
+    console.log(`Sent link ${url} to ${to}`);
+    return;
+  }
+
+  // Fallback: attach the self-contained file.
   await transport.sendMail({
     from,
     to,
@@ -57,7 +78,6 @@ async function main() {
       { filename: path.basename(relPath), content: html, contentType: "text/html; charset=utf-8" },
     ],
   });
-
   console.log(`Sent ${relPath} to ${to}`);
 }
 

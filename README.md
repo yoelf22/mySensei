@@ -17,8 +17,9 @@ last quiz went, and emails you a single HTML file you open in any browser.
 
 **Delivery (automatic, GitHub Actions — no Claude Code needed)**
 5. On your cadence, an Action asks Claude to write the next lesson (adapting to your
-   last quiz) and emails you a self-contained HTML file.
-6. You open it, learn, and take the 3–5 question quiz at the bottom.
+   last quiz), publishes it to a private Cloudflare Pages site, and emails you a
+   one-click link.
+6. You open it in any browser, learn, and take the 3–5 question quiz at the bottom.
 7. Your pass/fail goes through a tiny helper service back to GitHub, which records it
    and picks the next lesson: **pass → move on, fail → re-teach differently.**
 

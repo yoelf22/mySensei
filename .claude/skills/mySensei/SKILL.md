@@ -146,6 +146,10 @@ for each:
 4. **Cloudflare Worker** — deploy the quiz helper; capture its URL. Store the URL as the
    `QUIZ_WEBHOOK_URL` repo variable (the lesson template uses it) and set the Worker's
    GitHub token secret.
+5. **Cloudflare Pages** — lessons are hosted (repo stays private) and emailed as a
+   one-click link. Set `CLOUDFLARE_API_TOKEN` (secret) + `CLOUDFLARE_ACCOUNT_ID` (var),
+   create the `mysensei-lessons` Pages project, and set `LESSONS_BASE_URL` to its URL.
+   See `SETUP.md` §4b.
 
 Use `gh secret set` / `gh variable set` for the GitHub side. Never print secret values
 back; confirm only that each was set.

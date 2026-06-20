@@ -215,6 +215,11 @@ async function masteryPage(client, curriculum) {
 // --- main -------------------------------------------------------------------
 
 async function main() {
+  if (!fs.existsSync(path.join(ROOT, "curriculum.json"))) {
+    console.log("No curriculum.json yet — run /mySensei to onboard. Nothing to send.");
+    setOutput({ sent: "false" });
+    return;
+  }
   const curriculum = readCurriculum();
   const force = process.env.MYSENSEI_FORCE === "1";
 

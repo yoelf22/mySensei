@@ -75,12 +75,21 @@ Ask these **separately**, in order, adapting follow-ups to their answers:
 
 1. **Angle.** *"Within [subject], what's the specific angle you care about — what would
    make this time well spent for you?"* Pin down the concrete goal. Store as `angle`.
-2. **Level.** Explain the scale plainly, then ask: *"On a scale of 1 to 10, where 1 is
-   total beginner and 10 is expert, where would you put yourself on this?"* Store the
-   answer as both `startLevel` and `level` (integer 1–10). If they're unsure, ask one or
-   two quick diagnostic questions and estimate it with them. Mention that this is a
-   starting point — the course climbs their level as they pass quizzes, and at level 10
-   they'll pick a specialization and keep going.
+2. **Level — placement check (do NOT ask them to self-rate).** Self-ratings are
+   unreliable, so measure instead. Administer a short laddered diagnostic:
+   - Generate **7 multiple-choice questions** (4 options each), grounded in the subject +
+     angle + research, **ordered easy → hard** so each probes a higher expertise band.
+     Tag each question with the difficulty band (1–10) it targets. Use **9** questions
+     instead of 7 if they are short, single-concept recall items.
+   - Present them in **two quick AskUserQuestion rounds** (4, then the rest), in the
+     course language. Don't reveal the correct answers.
+   - **Judge** the level from the answer pattern: find the band where the learner crosses
+     from reliably correct to incorrect — that's the level — nudging up for hard items
+     they nailed and down for easy ones they missed. State the estimate with a one-line
+     rationale and let them accept or override.
+   - Store the result as both `startLevel` and `level` (integer 1–10).
+   Briefly note this is a starting point — the course climbs their level as they pass
+   lesson quizzes, and at level 10 they pick a specialization and keep going.
 
 ## Phase 3 — Settings (one question per message)
 

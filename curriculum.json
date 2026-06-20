@@ -2,8 +2,8 @@
   "version": 1,
   "subject": "\"Do Androids Dream of Electric Sheep?\" (Philip K. Dick) — the Christian themes inspiring the book, as opposed to its film-noir roots",
   "angle": "Mercerism as a Christ myth: Wilbur Mercer as a Christ figure (the climb, the stoning, death and resurrection), the empathy box as communion and shared suffering, empathy as the line between human and android, the 'Mercer is a fraud yet still real' problem, Dick's Gnostic undercurrent, and how the novel's religious core is what the neo-noir film adaptation strips away.",
-  "startLevel": 7,
-  "level": 7,
+  "startLevel": 9,
+  "level": 9,
   "settings": {
     "language": "English",
     "languageCode": "en",
@@ -30,13 +30,13 @@
       "id": 1,
       "title": "The Passion of Wilbur Mercer",
       "summary": "How Mercer's endless climb, the stoning, his death and rising map onto the Gospel passion narrative.",
-      "targetLevel": 8
+      "targetLevel": 9
     },
     {
       "id": 2,
       "title": "The empathy box as sacrament",
       "summary": "Fusion with Mercer as communion and imitatio Christi; the wounds that appear on the user's own body as stigmata.",
-      "targetLevel": 8
+      "targetLevel": 9
     },
     {
       "id": 3,

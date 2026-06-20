@@ -1,0 +1,34 @@
+name: send-syllabus
+
+# Renders the approved syllabus as a standalone document and emails it.
+# Run by hand (Actions → send-syllabus → Run workflow) after onboarding.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+
+      - name: Render + email the syllabus
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          MAIL_TO: ${{ vars.MAIL_TO }}
+        run: node scripts/send-syllabus.mjs
+
+      - name: Commit syllabus.html
+        run: |
+          git config user.name "mySensei bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add syllabus.html
+          git commit -m "syllabus: standalone document" || echo "nothing to commit"
+          git push

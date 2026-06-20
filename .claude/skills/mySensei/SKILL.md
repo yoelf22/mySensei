@@ -125,6 +125,15 @@ and `trackHistory` to `[]`. Make sure `startLevel` and `level` are both set.
 Read it back to the learner in plain terms (subject, angle, level, schedule, # of modules)
 and confirm it matches.
 
+## Phase 5b — Deliver the syllabus as a standalone piece
+
+The approved syllabus is a deliverable, not just chat text. Render it as its own document
+and send it to the learner — a course overview they hold, separate from the daily lessons.
+`scripts/send-syllabus.mjs` renders `lib/render-syllabus.mjs` to `syllabus.html` and emails
+it; the `send-syllabus` GitHub Action runs it with the mail secrets. After the account
+setup exists (Phase 6), trigger it with `gh workflow run send-syllabus.yml`. This is part
+of onboarding — don't skip it.
+
 ## Phase 6 — One-time account setup
 
 Now wire up delivery. Walk through `SETUP.md` with them, **one step at a time**, pausing

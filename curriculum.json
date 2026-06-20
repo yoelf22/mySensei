@@ -11,25 +11,70 @@
     "cadence": "daily",
     "deliveryTime": "07:00",
     "timezone": "Asia/Jerusalem",
-    "workweekDays": [0, 1, 2, 3, 4, 5, 6],
+    "workweekDays": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
     "email": "yoel@theroadtlv.com",
     "model": "claude-sonnet-4-6",
     "passThreshold": 0.7
   },
   "researchContext": "Do Androids Dream of Electric Sheep? (1968) carries a Christian backbone in Mercerism, whose prophet Wilbur Mercer is a Christ-like figure endlessly climbing a hill while unseen forces stone him — suffering, dying, and rising. Adherents grip an 'empathy box' to fuse with his pain and with one another, echoing communion and the tradition of sharing in Christ's suffering (imitatio Christi), and wounds from Mercer's ordeal appear on the user's own body like stigmata. Empathy is the sacred trait that separates humans from androids, who are barred from Mercerism. Mid-novel, Buster Friendly 'exposes' Mercer as a fraud filmed on a Hollywood set, yet Mercer still appears to J.R. Isidore and Rick Deckard — the book arguing that faith is true in its effects rather than its literal facts. Beneath this sits Philip K. Dick's lifelong religious preoccupation, especially Gnostic Christianity (the material world as a prison of entropy and 'kipple' run by false powers, with salvation through hidden knowledge), later spelled out in VALIS and the Exegesis. The hard-boiled film-noir tone belongs largely to the Blade Runner adaptation, which cuts Mercerism, the mood organs, and the empathy religion to sharpen a neo-noir detective story; Dick was not writing noir, only hinting at it late. Learner is at level 7 (well-read, comfortable with the plot and the major ideas), so lessons should assume familiarity and work at the level of theology, sources, close reading, and scholarship.",
   "outline": [
-    { "id": 1, "title": "The Passion of Wilbur Mercer", "summary": "How Mercer's endless climb, the stoning, his death and rising map onto the Gospel passion narrative.", "targetLevel": 8 },
-    { "id": 2, "title": "The empathy box as sacrament", "summary": "Fusion with Mercer as communion and imitatio Christi; the wounds that appear on the user's own body as stigmata.", "targetLevel": 8 },
-    { "id": 3, "title": "Empathy as the line between saved and damned", "summary": "Mercerism's doctrine that empathy is humanity, why androids are barred, and what 'salvation' means in this religion.", "targetLevel": 9 },
-    { "id": 4, "title": "\"Mercer is a fraud\" — and still real", "summary": "Buster Friendly's debunking versus Mercer still appearing to Isidore and Deckard; faith as true in its effects, not its facts.", "targetLevel": 9 },
-    { "id": 5, "title": "Dick's Gnostic undercurrent", "summary": "World as prison (kipple, entropy, the fake and the real), salvation through hidden knowledge, and Mercer as a Gnostic rather than orthodox Christ.", "targetLevel": 9 },
-    { "id": 6, "title": "Why the noir film had to cut it", "summary": "What Mercerism does that neo-noir can't carry, and the case that this is a religious novel wearing a detective's coat.", "targetLevel": 10 }
+    {
+      "id": 1,
+      "title": "The Passion of Wilbur Mercer",
+      "summary": "How Mercer's endless climb, the stoning, his death and rising map onto the Gospel passion narrative.",
+      "targetLevel": 8
+    },
+    {
+      "id": 2,
+      "title": "The empathy box as sacrament",
+      "summary": "Fusion with Mercer as communion and imitatio Christi; the wounds that appear on the user's own body as stigmata.",
+      "targetLevel": 8
+    },
+    {
+      "id": 3,
+      "title": "Empathy as the line between saved and damned",
+      "summary": "Mercerism's doctrine that empathy is humanity, why androids are barred, and what 'salvation' means in this religion.",
+      "targetLevel": 9
+    },
+    {
+      "id": 4,
+      "title": "\"Mercer is a fraud\" — and still real",
+      "summary": "Buster Friendly's debunking versus Mercer still appearing to Isidore and Deckard; faith as true in its effects, not its facts.",
+      "targetLevel": 9
+    },
+    {
+      "id": 5,
+      "title": "Dick's Gnostic undercurrent",
+      "summary": "World as prison (kipple, entropy, the fake and the real), salvation through hidden knowledge, and Mercer as a Gnostic rather than orthodox Christ.",
+      "targetLevel": 9
+    },
+    {
+      "id": 6,
+      "title": "Why the noir film had to cut it",
+      "summary": "What Mercerism does that neo-noir can't carry, and the case that this is a religious novel wearing a detective's coat.",
+      "targetLevel": 10
+    }
   ],
   "progress": {
     "currentModule": 1,
     "attempt": 1,
     "status": "active",
-    "delivered": [],
+    "delivered": [
+      {
+        "module": 1,
+        "attempt": 1,
+        "lessonFile": "lessons/lesson-01-attempt1.html",
+        "sentAt": "2026-06-20T11:18:08.954Z"
+      }
+    ],
     "lastQuiz": null
   },
   "trackHistory": []

@@ -1,3 +1,7 @@
+# mySensei ships its skill in-repo, so override the global ignore of .claude/
+!.claude/
+!.claude/**
+
 node_modules/
 .env
 .env.*

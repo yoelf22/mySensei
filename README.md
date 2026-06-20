@@ -22,6 +22,14 @@ last quiz went, and emails you a single HTML file you open in any browser.
 7. Your pass/fail goes through a tiny helper service back to GitHub, which records it
    and picks the next lesson: **pass → move on, fail → re-teach differently.**
 
+## Progression and the end-game
+
+Your level isn't fixed — it **climbs from your starting self-rating toward 10** as you
+pass quizzes. The course never just ends: while you're below level 10 it keeps generating
+more advanced lessons. When you reach **level 10** on a subject, mySensei congratulates you
+and asks you to pick a **specialization** — a deeper or adjacent niche — then builds a fresh
+track for it and keeps you climbing.
+
 ## The lesson file
 
 Each lesson is one light HTML file:

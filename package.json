@@ -1,0 +1,17 @@
+{
+  "name": "mysensei",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal tutor that drips browser-readable lessons to your inbox on a cadence.",
+  "scripts": {
+    "generate": "node scripts/generate-lesson.mjs",
+    "send": "node scripts/send-email.mjs",
+    "record": "node scripts/record-quiz.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
+    "nodemailer": "^9.0.1"
+  }
+}

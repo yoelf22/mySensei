@@ -1,0 +1,14 @@
+name = "mysensei-quiz-helper"
+main = "src/worker.mjs"
+compatibility_date = "2026-06-01"
+
+# Plain vars (safe to commit). Set these to your GitHub account + repo.
+[vars]
+GITHUB_OWNER = "yoelf22"
+GITHUB_REPO = "mySensei"
+
+# GITHUB_TOKEN is a SECRET — never put it here. Set it once with:
+#   cd worker && npx wrangler secret put GITHUB_TOKEN
+# Deploy with:
+#   cd worker && npx wrangler deploy
+# The deploy prints the worker URL — that becomes QUIZ_WEBHOOK_URL.

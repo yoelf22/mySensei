@@ -1,0 +1,39 @@
+name: record-quiz
+
+# Triggered by the quiz helper (Cloudflare Worker) via repository_dispatch when
+# you finish a lesson's quiz. Records the result, then advances or repeats.
+on:
+  repository_dispatch:
+    types: [quiz-result]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mysensei-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Apply quiz result
+        env:
+          QUIZ_MODULE: ${{ github.event.client_payload.module }}
+          QUIZ_ATTEMPT: ${{ github.event.client_payload.attempt }}
+          QUIZ_SCORE: ${{ github.event.client_payload.score }}
+          QUIZ_TOTAL: ${{ github.event.client_payload.total }}
+        run: npm run --silent record
+
+      - name: Commit progress
+        run: |
+          git config user.name "mySensei bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add curriculum.json
+          git commit -m "quiz: module ${{ github.event.client_payload.module }} recorded" || echo "nothing to commit"
+          git push

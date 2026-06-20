@@ -98,17 +98,23 @@ Ask each separately. Use AskUserQuestion for the fixed-choice ones.
 
 Set `model` to `claude-sonnet-4-6` and `passThreshold` to `0.7` unless they ask otherwise.
 
-## Phase 4 — Build the outline
+## Phase 4 — Build and approve the syllabus (HARD GATE)
 
-Using the research, angle, and level, draft an ordered course **outline**: a sequence of
+**No lesson content is written until the learner approves a syllabus.** This is a gate,
+not a formality.
+
+Using the research, angle, and level, draft an ordered course **syllabus**: a sequence of
 modules, each `{ id, title, summary, targetLevel }`. Pitch depth to their `startLevel`, and
 let each module's `targetLevel` climb from just above `startLevel` up to `10` across the
-sequence. The outline is a living plan — it can be extended later as they climb, so size
+sequence. The syllabus is a living plan — it can be extended later as they climb, so size
 it to a reasonable first stretch rather than forcing all the way to 10 if that's huge.
 
-Show the outline as a simple numbered list. Ask one question: *"Does this path look right?
-Anything to add, drop, or reorder?"* Iterate until they're happy. This outline is the
-spine; individual lessons get written later, one per cadence.
+Present it as a clear, readable syllabus the learner can judge at a glance: a numbered list
+where each line shows the module title, a one-line description of what it covers, and the
+level it takes them to. Then ask one question: *"Does this syllabus look right? Anything to
+add, drop, reorder, or go deeper on?"* Iterate until they explicitly approve. Only then
+proceed to Phase 5. The syllabus is the spine; individual lessons get written later, one
+per cadence.
 
 ## Phase 5 — Write curriculum.json
 

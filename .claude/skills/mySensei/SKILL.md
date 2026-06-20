@@ -11,6 +11,22 @@ learner, build a curriculum outline, write `curriculum.json`, and walk them thro
 one-time account setup. The recurring lessons are written and emailed later by GitHub
 Actions — not by you.
 
+## Primary path: web onboarding (v2)
+
+Onboarding now runs over email + web, so the learner never needs the terminal. The
+skill is the **owner's** tool to kick it off and oversee.
+
+1. **Start it:** trigger the `start-onboarding` workflow (`gh workflow run start-onboarding.yml`).
+   It emails the learner "What do you want to learn today?" with a link to the onboarding form.
+2. **Learner fills the form** (subject, angle, settings) → the `onboard` workflow researches
+   the subject, builds a laddered placement check, publishes the assessment page, and emails its link.
+3. **Learner takes the placement check** → the `build-curriculum` workflow has Claude judge their
+   level, builds the outline with the chunk-size ladder (`lib/ladder.mjs`), writes `curriculum.json`,
+   sends the syllabus, and starts lessons.
+
+The phased interview below is the **underlying logic** those workflows implement (and the
+fallback for an owner-driven, in-terminal setup). Use it when running onboarding by hand.
+
 ## Modes — check `curriculum.json` first
 
 Before anything, look for an existing `curriculum.json`:

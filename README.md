@@ -8,12 +8,14 @@ last quiz went, and emails you a single HTML file you open in any browser.
 
 ## How it works
 
-**Setup (interactive, in Claude Code)**
-1. You pick the language for your course, then give a subject in plain words.
-2. It researches the subject on the web.
-3. It interviews you (in your chosen language): the angle you care about, your level
-   (1–10), and your settings (lesson length, daily/weekly, time, timezone, which days).
-4. It writes this repo's `curriculum.json` and pushes to GitHub.
+**Setup (email + web — no terminal needed)**
+1. An entry email asks "What do you want to learn today?" and links to an onboarding form.
+2. You enter the subject, angle, and settings; the system researches the subject and emails
+   you a short **placement check** (a laddered web quiz that measures your level).
+3. You answer it; Claude judges your level, builds the outline with the chunk-size ladder,
+   writes `curriculum.json`, sends your syllabus, and starts lessons.
+
+(The `/mySensei` Claude Code skill is the owner's tool to kick this off and oversee.)
 
 **Delivery (automatic, GitHub Actions — no Claude Code needed)**
 5. On your cadence, an Action asks Claude to write the next lesson (adapting to your

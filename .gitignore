@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.*
+*.log
+.DS_Store
+
+# Generated lessons are kept in git for history, but local scratch is not:
+lessons/.scratch/

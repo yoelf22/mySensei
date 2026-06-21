@@ -21,6 +21,7 @@ jobs:
       - name: Render syllabus
         env:
           MYSENSEI_RENDER_ONLY: "1"
+          QUIZ_WEBHOOK_URL: ${{ vars.QUIZ_WEBHOOK_URL }}
         run: node scripts/send-syllabus.mjs
 
       - name: Publish to Cloudflare Pages
@@ -35,6 +36,7 @@ jobs:
           MAIL_FROM: ${{ vars.MAIL_FROM }}
           MAIL_TO: ${{ vars.MAIL_TO }}
           LESSONS_BASE_URL: ${{ vars.LESSONS_BASE_URL }}
+          QUIZ_WEBHOOK_URL: ${{ vars.QUIZ_WEBHOOK_URL }}
         run: node scripts/send-syllabus.mjs
 
       - name: Commit syllabus

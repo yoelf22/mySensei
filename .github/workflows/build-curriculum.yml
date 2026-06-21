@@ -40,6 +40,7 @@ jobs:
       - name: Render syllabus
         env:
           MYSENSEI_RENDER_ONLY: "1"
+          QUIZ_WEBHOOK_URL: ${{ vars.QUIZ_WEBHOOK_URL }}
         run: node scripts/send-syllabus.mjs
 
       - name: Publish to Cloudflare Pages
@@ -48,21 +49,14 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4 pages deploy lessons --project-name=mysensei-lessons --branch=main --commit-dirty=true
 
-      - name: Email the syllabus
+      - name: Email the syllabus (with approve button)
         env:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_FROM: ${{ vars.MAIL_FROM }}
           MAIL_TO: ${{ vars.MAIL_TO }}
           LESSONS_BASE_URL: ${{ vars.LESSONS_BASE_URL }}
+          QUIZ_WEBHOOK_URL: ${{ vars.QUIZ_WEBHOOK_URL }}
         run: node scripts/send-syllabus.mjs
-
-      - name: Email the first lesson
-        env:
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          MAIL_FROM: ${{ vars.MAIL_FROM }}
-          MAIL_TO: ${{ vars.MAIL_TO }}
-          LESSONS_BASE_URL: ${{ vars.LESSONS_BASE_URL }}
-        run: npm run --silent send
 
       - name: Commit
         run: |

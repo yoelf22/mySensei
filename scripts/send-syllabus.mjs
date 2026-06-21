@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 async function main() {
   const curriculum = JSON.parse(fs.readFileSync(path.join(ROOT, "curriculum.json"), "utf8"));
-  const html = renderSyllabusHtml({ curriculum });
+  const html = renderSyllabusHtml({ curriculum, webhookUrl: process.env.QUIZ_WEBHOOK_URL || "" });
   // Publish into lessons/ so the Pages deploy serves it at a one-click URL.
   fs.mkdirSync(path.join(ROOT, "lessons"), { recursive: true });
   fs.writeFileSync(path.join(ROOT, "lessons", "course-syllabus.html"), html);

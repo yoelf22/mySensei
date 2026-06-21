@@ -12,8 +12,9 @@ last quiz went, and emails you a single HTML file you open in any browser.
 1. An entry email asks "What do you want to learn today?" and links to an onboarding form.
 2. You enter the subject, angle, and settings; the system researches the subject and emails
    you a short **placement check** (a laddered web quiz that measures your level).
-3. You answer it; Claude judges your level, builds the outline with the chunk-size ladder,
-   writes `curriculum.json`, sends your syllabus, and starts lessons.
+3. You answer it; Claude judges your level and builds your syllabus. You **review and
+   approve** the syllabus, and **Lesson 1 arrives immediately** — then lessons continue on
+   your cadence.
 
 (The `/mySensei` Claude Code skill is the owner's tool to kick this off and oversee.)
 

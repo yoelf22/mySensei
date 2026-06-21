@@ -22,7 +22,10 @@ skill is the **owner's** tool to kick it off and oversee.
    the subject, builds a laddered placement check, publishes the assessment page, and emails its link.
 3. **Learner takes the placement check** → the `build-curriculum` workflow has Claude judge their
    level, builds the outline with the chunk-size ladder (`lib/ladder.mjs`), writes `curriculum.json`,
-   sends the syllabus, and starts lessons.
+   pre-generates Lesson 1, and emails the **syllabus with an "Approve & start" button** (Lesson 1 is
+   published but not yet sent).
+4. **Learner approves the syllabus** → the `start-lessons` workflow emails the already-generated
+   Lesson 1 immediately (no generation wait). Subsequent lessons continue on the cadence.
 
 The phased interview below is the **underlying logic** those workflows implement (and the
 fallback for an owner-driven, in-terminal setup). Use it when running onboarding by hand.

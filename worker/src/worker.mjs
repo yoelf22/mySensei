@@ -49,6 +49,10 @@ function buildDispatch(body) {
     return { event_type: "assessment-result", client_payload: { results } };
   }
 
+  if (type === "approve") {
+    return { event_type: "syllabus-approved", client_payload: {} };
+  }
+
   // quiz (default)
   const module = Number(body.module), attempt = Number(body.attempt) || 1;
   const score = Number(body.score), total = Number(body.total);

@@ -1,0 +1,25 @@
+# .github/workflows/send-mail.yml
+name: send-mail
+on:
+  repository_dispatch:
+    types: [send-mail]
+permissions:
+  contents: read
+jobs:
+  mail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - name: Send the email
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          MAIL_TO: ${{ github.event.client_payload.to }}
+          EMAIL_SUBJECT: ${{ github.event.client_payload.subject }}
+          EMAIL_INTRO: ${{ github.event.client_payload.intro }}
+          EMAIL_URL: ${{ github.event.client_payload.url }}
+        run: node scripts/email-link.mjs

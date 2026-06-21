@@ -1,13 +1,11 @@
 {
   "version": 1,
-  "subject": "\"Do Androids Dream of Electric Sheep?\" (Philip K. Dick) — the Christian themes inspiring the book, as opposed to its film-noir roots",
-  "angle": "Mercerism as a Christ myth: Wilbur Mercer as a Christ figure (the climb, the stoning, death and resurrection), the empathy box as communion and shared suffering, empathy as the line between human and android, the 'Mercer is a fraud yet still real' problem, Dick's Gnostic undercurrent, and how the novel's religious core is what the neo-noir film adaptation strips away.",
-  "startLevel": 9,
-  "level": 9,
+  "subject": "מיסוי פרוגרסיבי",
+  "angle": "לפי התאוריה הפוליטית השלטת",
   "settings": {
-    "language": "English",
-    "languageCode": "en",
-    "chunkMinutes": 5,
+    "language": "עברית",
+    "languageCode": "עב",
+    "chunkMinutes": 10,
     "cadence": "daily",
     "deliveryTime": "07:00",
     "timezone": "Asia/Jerusalem",
@@ -20,61 +18,17 @@
       5,
       6
     ],
-    "email": "yoel@theroadtlv.com",
+    "email": "yoel.frischoff@gmail.com",
     "model": "claude-sonnet-4-6",
     "passThreshold": 0.7
   },
-  "researchContext": "Do Androids Dream of Electric Sheep? (1968) carries a Christian backbone in Mercerism, whose prophet Wilbur Mercer is a Christ-like figure endlessly climbing a hill while unseen forces stone him — suffering, dying, and rising. Adherents grip an 'empathy box' to fuse with his pain and with one another, echoing communion and the tradition of sharing in Christ's suffering (imitatio Christi), and wounds from Mercer's ordeal appear on the user's own body like stigmata. Empathy is the sacred trait that separates humans from androids, who are barred from Mercerism. Mid-novel, Buster Friendly 'exposes' Mercer as a fraud filmed on a Hollywood set, yet Mercer still appears to J.R. Isidore and Rick Deckard — the book arguing that faith is true in its effects rather than its literal facts. Beneath this sits Philip K. Dick's lifelong religious preoccupation, especially Gnostic Christianity (the material world as a prison of entropy and 'kipple' run by false powers, with salvation through hidden knowledge), later spelled out in VALIS and the Exegesis. The hard-boiled film-noir tone belongs largely to the Blade Runner adaptation, which cuts Mercerism, the mood organs, and the empathy religion to sharpen a neo-noir detective story; Dick was not writing noir, only hinting at it late. Learner is at level 7 (well-read, comfortable with the plot and the major ideas), so lessons should assume familiarity and work at the level of theology, sources, close reading, and scholarship.",
-  "outline": [
-    {
-      "id": 1,
-      "title": "The Passion of Wilbur Mercer",
-      "summary": "How Mercer's endless climb, the stoning, his death and rising map onto the Gospel passion narrative.",
-      "targetLevel": 9
-    },
-    {
-      "id": 2,
-      "title": "The empathy box as sacrament",
-      "summary": "Fusion with Mercer as communion and imitatio Christi; the wounds that appear on the user's own body as stigmata.",
-      "targetLevel": 9
-    },
-    {
-      "id": 3,
-      "title": "Empathy as the line between saved and damned",
-      "summary": "Mercerism's doctrine that empathy is humanity, why androids are barred, and what 'salvation' means in this religion.",
-      "targetLevel": 9
-    },
-    {
-      "id": 4,
-      "title": "\"Mercer is a fraud\" — and still real",
-      "summary": "Buster Friendly's debunking versus Mercer still appearing to Isidore and Deckard; faith as true in its effects, not its facts.",
-      "targetLevel": 9
-    },
-    {
-      "id": 5,
-      "title": "Dick's Gnostic undercurrent",
-      "summary": "World as prison (kipple, entropy, the fake and the real), salvation through hidden knowledge, and Mercer as a Gnostic rather than orthodox Christ.",
-      "targetLevel": 9
-    },
-    {
-      "id": 6,
-      "title": "Why the noir film had to cut it",
-      "summary": "What Mercerism does that neo-noir can't carry, and the case that this is a religious novel wearing a detective's coat.",
-      "targetLevel": 10
-    }
-  ],
+  "researchContext": "Now I have enough material to write a comprehensive, tight summary in Hebrew for a course. Let me compose the answer.\n\n---\n\n## מיסוי פרוגרסיבי — לפי התאוריה הפוליטית השלטת\n\n---\n\n### 🗺️ מה זה ואיך זה עובד\n\n\nמיסוי פרוגרסיבי הוא מדיניות המצמצמת את אי-השוויון: ככל שההכנסה גבוהה יותר, שיעור המס על החלק הנוסף עולה. לעומתה, מס רגרסיבי — כמו מס גולגולת — מטיל סכום אחיד מכל אדם, ובכך דווקא מגדיל אי-שוויון.\n\n\nבישראל, מס ההכנסה החל על יחידים הוא פרוגרסיבי: ההכנסה החייבת מחולקת לשכבות, ועל כל שכבה מוטל מס בשיעור שונה.\n\n\n---\n\n### 🏛️ עמודי-תווך תאורטיים — הדיון הפוליטי השלט\n\nשלוש מסגרות תיאורטיות שולטות בדיון:\n\n#### 1. אוטיליטריזם (תועלתנות)\n\nגישה זו, המתבטאת בעיקר כיום בשפת הכלכלה, ממשיכה לשלוט בשיח הפוליטי העכשווי.\n הנחת-היסוד: כסף שולי שווה יותר לעני מאשר לעשיר (תועלת שולית פוחתת), ולכן העברת משאבים מהעשיר לעני מגדילה את רווחת החברה הכוללת.\n\nכיוון שהתועלת השולית פוחתת, מתכנן חברתי שמכוון למקסם רווחה שואף להשוות את הצריכה בין בעלי-הכנסה שונים.\n\n\n#### 2. ליברליזם שוויוני — ג'ון רולס\n\nכאשר אנו דנים במיסוי פרוגרסיבי, מדיניות חינוך, ביטחון סוציאלי או עקרון שוויון ההזדמנויות, אנחנו בדרך כלל מתווכחים בדיוק על השאלות שרולס הציב במרכז: איך להפוך הזדמנות להוגנת, ומתי אי-שוויון מוצדק.\n\n\nרולס מציע את עיקרון ה\"מקסימין\" — בתנאי אי-ודאות ייבחרו פרטים באלטרנטיבה \"הרעה במיעוטה\", כלומר יש למקסם את מצב הנמצאים בתחתית.\n מכאן נגזר תמיכה בחלוקה מחדש של עושר.\n> ⚠️ **סייג חשוב:** \nרולס עצמו טען כי כאשר המוסדות הרקע צודקים, מס צריכה פרופורציונאלי עשוי להיות עדיף על מס הכנסה פרוגרסיבי — עמדה מפתיעה.\n\n\n#### 3. ליברטריאניזם — נוזיק ואחרים\n\nהפילוסופיה הליברטריאנית גורסת כי לאדם זכות קניין בגופו וברכושו, והוא חופשי לעשות באלו כרצונו, כל עוד אינו פוגע באחרים.\n מכאן: מיסוי פרוגרסיבי הוא פגיעה בזכות הקניין ולגיטימציה להפרה כפויה של חירות.\n\nליברטריאנים ואוטיליטריסטים חלוקים: האוטיליטריזם והליברליזם רואים בהכנסות החברה משאב משותף שניתן לחלוקה מחדש; הליברטריאניזם מתנגד לכך מעיקרו.\n\n\n---\n\n### 📚 תתי-הנושאים המרכזיים\n\n| תת-נושא | שאלת הליבה |\n|---|---|\n| **צדק חלוקתי** | מה חלוקה הוגנת של נטל המס? |\n| **עיקרון היכולת לשלם** | \nשורשיו היסטוריים: חלוקת נטל המיסוי לפי הנסיבות הכלכליות של משלם המס.\n |\n| **תועלת שולית פוחתת** | האם לכסף פחות שווי עבור עשירים? |\n| **יעילות vs. שוויון** | \nמיסוי גבוה עשוי לפגוע בזכות הקניין וגם לייצר נסיגה כלכלית ולהבריח יזמים ומשקיעים.\n |\n| **מס אופטימלי (מירליס)** | \nאחד הממצאים הידועים בתורת המס האופטימלי הוא שהשיעור השולי על ההכנסה הגבוהה ביותר אמור להיות אפס — ממצא \"שנוי במחלוקת\".\n |\n| **מס ישיר vs. עקיף** | \nמס ההכנסה הישיר הוא פרוגרסיבי ומצמצם פערים, ואילו מע\"מ הוא בשיעור אחיד ולכן אינו פרוגרסיבי — ישראל יוצאת דופן בהסתמכות גבוהה על מסים עקיפים.\n |\n| **שיטוח המס (Flat Tax)** | האם מס אחיד הוגן יותר? |\n| **ירושה ועושר בין-דורי** | האם מיסוי ירושות מוצדק פוליטית? |\n\n---\n\n### 🌱 מתחיל — מה מתמקד בו?\n\n- **הגדרה בסיסית**: מדרגות מס — כל שכבת הכנסה ממוסה בשיעור שונה\n- **ההיגיון האינטואיטיבי**: עשיר יכול \"לשאת\" יותר\n- **רולס בגדול**: \"הצעיף של הבערות\" ומקסום מצב החלשים\n- **שיווי-משקל פשוט**: פרוגרסיבי = צודק חברתית; רגרסיבי = לא צודק\n- **ישראל**: מדרגות מס, נקודות זיכוי, מס שולי\n\n---\n\n### 🎓 מומחה — מה מתמקד בו?\n\n- **מירליס ומס אופטימלי**: כיצד לבנות לוח מס יעיל תחת מידע חלקי על יכולות\n- **הסייג הרולסיאני**: מדוע רולס עצמו לא בהכרח תמך במס הכנסה פרוגרסיבי ספציפית\n- **trade-off יעילות-שוויון**: עקומת לאפר, השפעות על תמריצי עבודה, חיסכון והשקעות\n- **סופיציינטריאניזם ולפטרייאניזם שמאלני**: גישות ביניים שמאפשרות מיסוי מעבר למינימום נוזיקאי\n- **מיסוי צריכה vs. הכנסה**: ויכוח נורמטיבי וטכני בעל השלכות ענק\n- \nניתוח כלכלי נורמטיבי: \"מדיניות מס וחוסר-שוויון הוגן\" (קאפלן וטונגודן) — שאלת האחריות האישית לעומת נסיבות חיים כגורם מכריע במדיניות מס.\n\n\n---\n\n**בשורה תחתונה:** לפי התאוריה הפוליטית השלטת, מיסוי פרוגרסיבי אינו רק כלי טכני — הוא שדה קרב בין שלוש תפיסות-עולם: **מי שמאמין שרווחה כוללת מצדיקה חלוקה מחדש** (אוטיליטריסטים), **מי שמאמין שחברה צודקת חייבת להגן על החלשים תחת אי-ודאות** (רולסיאנים), **ומי שרואה בכל מס כפוי מעבר למינימום הכרחי פגיעה בחירות** (ליברטריאנים).",
+  "outline": [],
   "progress": {
     "currentModule": 1,
     "attempt": 1,
-    "status": "active",
-    "delivered": [
-      {
-        "module": 1,
-        "attempt": 1,
-        "lessonFile": "lessons/lesson-01-attempt1.html",
-        "sentAt": "2026-06-20T11:18:08.954Z"
-      }
-    ],
+    "status": "awaiting-assessment",
+    "delivered": [],
     "lastQuiz": null
   },
   "trackHistory": []

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="עב" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mySensei — placement check</title>
+<style>
+  :root{--ink:#1d1b16;--muted:#6b6457;--bg:#faf8f3;--accent:#b4541f;--line:#e7e1d5;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Georgia,serif;}
+  main{max-width:42rem;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
+  h1{font-size:1.6rem;margin:0 0 .3rem;} p.sub{color:var(--muted);margin:0 0 1.5rem;}
+  .q{border:1px solid var(--line);border-radius:.5rem;padding:1rem 1.2rem;margin:1rem 0;}
+  legend{font-weight:bold;padding:0 .4rem;}
+  .opt{display:block;padding:.35rem 0;cursor:pointer;font-family:system-ui,sans-serif;font-size:1rem;}
+  button{font:inherit;background:var(--accent);color:#fff;border:0;border-radius:.4rem;padding:.7rem 1.4rem;cursor:pointer;margin-top:1rem;}
+  #done{display:none;margin-top:1.3rem;font-family:system-ui,sans-serif;font-weight:bold;color:#1a7f37;}
+  #err{display:none;margin-top:1rem;font-family:system-ui,sans-serif;color:var(--accent);}
+</style>
+</head>
+<body>
+<main>
+  <h1>Quick placement check</h1>
+  <p class="sub">מיסוי פרוגרסיבי — a few questions, easy to hard. Answer by gut; this just sets how deep your lessons start. Then I'll build your course and email it.</p>
+  <form id="f"><fieldset class="q"><legend>1. מהי ההגדרה הבסיסית של מיסוי פרוגרסיבי?</legend><label class="opt"><input type="radio" name="q0" value="0"> <span>כל אזרח משלם סכום מס זהה ללא קשר להכנסתו</span></label><label class="opt"><input type="radio" name="q0" value="1"> <span>ככל שההכנסה גבוהה יותר, שיעור המס השולי על החלק הנוסף עולה</span></label><label class="opt"><input type="radio" name="q0" value="2"> <span>כל אזרח משלם אחוז זהה מהכנסתו ללא מדרגות</span></label><label class="opt"><input type="radio" name="q0" value="3"> <span>הממשלה קובעת מס על פי מספר בני המשפחה בלבד</span></label></fieldset><fieldset class="q"><legend>2. מהו ההסבר האינטואיטיבי המרכזי התומך במיסוי פרוגרסיבי על פי עיקרון התועלת השולית הפוחתת?</legend><label class="opt"><input type="radio" name="q1" value="0"> <span>עשירים צורכים יותר מוצרים ולכן חייבים לשלם יותר מס</span></label><label class="opt"><input type="radio" name="q1" value="1"> <span>לכסף נוסף יש שווי פחות עבור עשיר מאשר עבור עני, ולכן העברת משאבים מגדילה את רווחת החברה הכוללת</span></label><label class="opt"><input type="radio" name="q1" value="2"> <span>מיסוי פרוגרסיבי מונע ממונופולים להיווצר בשוק</span></label><label class="opt"><input type="radio" name="q1" value="3"> <span>רק ממשלות דמוקרטיות יכולות ליישם מיסוי פרוגרסיבי</span></label></fieldset><fieldset class="q"><legend>3. מהו עיקרון ה&#39;מקסימין&#39; של רולס, וכיצד הוא תומך במיסוי פרוגרסיבי?</legend><label class="opt"><input type="radio" name="q2" value="0"> <span>יש למקסם את ההכנסה הממוצעת בחברה, גם אם הפערים גדלים</span></label><label class="opt"><input type="radio" name="q2" value="1"> <span>יש למקסם את מצבם של החלשים בחברה, כלומר לבחור במדיניות שהרעה במיעוטה עבור הנמצאים בתחתית</span></label><label class="opt"><input type="radio" name="q2" value="2"> <span>יש למקסם את חירות הפרט גם על חשבון שוויון ההכנסות</span></label><label class="opt"><input type="radio" name="q2" value="3"> <span>יש למקסם את ההכנסות הממשלתיות ללא קשר לחלוקתן</span></label></fieldset><fieldset class="q"><legend>4. מהי עמדת הגישה הליברטריאנית (כגון נוזיק) כלפי מיסוי פרוגרסיבי?</legend><label class="opt"><input type="radio" name="q3" value="0"> <span>מיסוי פרוגרסיבי מוצדק כל עוד הוא מאושר על ידי רוב דמוקרטי</span></label><label class="opt"><input type="radio" name="q3" value="1"> <span>מיסוי פרוגרסיבי הוא כלי יעיל לצמיחה כלכלית ולכן יש לתמוך בו</span></label><label class="opt"><input type="radio" name="q3" value="2"> <span>מיסוי פרוגרסיבי פוגע בזכות הקניין ומהווה הפרה כפויה של חירות הפרט</span></label><label class="opt"><input type="radio" name="q3" value="3"> <span>מיסוי פרוגרסיבי מוצדק רק כאשר הוא מממן שירותים ביטחוניים</span></label></fieldset><fieldset class="q"><legend>5. מדוע מע&quot;מ נחשב למס רגרסיבי בפועל, וכיצד ישראל יוצאת דופן בהקשר זה?</legend><label class="opt"><input type="radio" name="q4" value="0"> <span>מע&quot;מ רגרסיבי כי הוא מוטל רק על מוצרי יוקרה; ישראל פטרה ממנו מוצרי בסיס</span></label><label class="opt"><input type="radio" name="q4" value="1"> <span>מע&quot;מ הוא בשיעור אחיד ולכן נוטל חלק גדול יותר מהכנסת בעלי הכנסה נמוכה; ישראל יוצאת דופן בהסתמכות גבוהה יחסית על מסים עקיפים</span></label><label class="opt"><input type="radio" name="q4" value="2"> <span>מע&quot;מ רגרסיבי כי עשירים קונים יותר; ישראל מפצה בשיעורי מע&quot;מ מדורגים לפי מוצר</span></label><label class="opt"><input type="radio" name="q4" value="3"> <span>מע&quot;מ רגרסיבי רק בשיטות מיסוי פדרליות; ישראל כמדינה אוניטרית חסינה מבעיה זו</span></label></fieldset><fieldset class="q"><legend>6. מהו הסייג המפתיע שהציב רולס עצמו בנוגע למס הכנסה פרוגרסיבי, ומה משמעותו התיאורטית?</legend><label class="opt"><input type="radio" name="q5" value="0"> <span>רולס טען שמס פרוגרסיבי מוצדק רק כאשר שיעורו אינו עולה על 50%</span></label><label class="opt"><input type="radio" name="q5" value="1"> <span>רולס טען שכאשר המוסדות הרקע צודקים, מס צריכה פרופורציונלי עשוי להיות עדיף על מס הכנסה פרוגרסיבי, מה שמראה שהתמיכה הרולסיאנית בפרוגרסיביות אינה מובנת מאליה</span></label><label class="opt"><input type="radio" name="q5" value="2"> <span>רולס טען שכל מיסוי הוא פגיעה בחירות ולכן יש להעדיף מדינת מינימום</span></label><label class="opt"><input type="radio" name="q5" value="3"> <span>רולס תמך במס גולגולת אחיד כל עוד ההכנסות מועברות לחלשים</span></label></fieldset><fieldset class="q"><legend>7. אחד הממצאים הידועים בתורת המס האופטימלי של מירליס הוא ששיעור המס השולי על ההכנסה הגבוהה ביותר אמור להיות אפס. מה הפרדוקס שממצא זה מציב לתומכי מיסוי פרוגרסיבי, ומה ההנחה הגורמת לו?</legend><label class="opt"><input type="radio" name="q6" value="0"> <span>הממצא מציב פרדוקס כי הוא מניח שהעשירים ביותר אינם מגיבים לתמריצים; בפועל הם כן מגיבים ולכן השיעור צריך להיות גבוה</span></label><label class="opt"><input type="radio" name="q6" value="1"> <span>הממצא מציב פרדוקס כי למרות שאינטואיציית צדק חלוקתי דורשת מס גבוה על הגבוהים ביותר, הניתוח של יעילות תחת מידע חלקי על יכולות מראה שאין תוספת יעילות ממיסוי האדם השולי הגבוה ביותר, ולכן הפרוגרסיביות צריכה להיעצר לפני הראש</span></label><label class="opt"><input type="radio" name="q6" value="2"> <span>הממצא אינו מציב פרדוקס אמיתי כי הוא חל רק על כלכלות עם שוק עבודה קשיח</span></label><label class="opt"><input type="radio" name="q6" value="3"> <span>הממצא מציב פרדוקס כי הוא סותר את עקומת לאפר, שמנבאת שיעור אפס רק בהכנסה הנמוכה ביותר</span></label></fieldset>
+    <button type="submit">Submit</button>
+    <p id="done">Thanks — I'll judge your level, build your course, and email your syllabus shortly.</p>
+    <p id="err"></p>
+  </form>
+</main>
+<script id="meta" type="application/json">[{"level":1,"correct":1},{"level":2,"correct":1},{"level":3,"correct":1},{"level":4,"correct":2},{"level":5,"correct":1},{"level":7,"correct":1},{"level":10,"correct":1}]</script>
+<script>
+(function(){
+  var HOOK = "https://mysensei-quiz-helper.yoelf22mysensei.workers.dev";
+  var meta = JSON.parse(document.getElementById("meta").textContent);
+  var f = document.getElementById("f"), done = document.getElementById("done"), err = document.getElementById("err");
+  f.addEventListener("submit", function(e){
+    e.preventDefault();
+    err.style.display = "none";
+    var results = [];
+    for (var i=0;i<meta.length;i++){
+      var sel = f.querySelector('input[name="q'+i+'"]:checked');
+      if(!sel){ err.textContent="Please answer every question first."; err.style.display="block"; return; }
+      results.push({ level: meta[i].level, correct: parseInt(sel.value,10) === meta[i].correct });
+    }
+    if(!HOOK){ err.textContent="No submit endpoint configured."; err.style.display="block"; return; }
+    f.querySelector("button").disabled = true;
+    fetch(HOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"assessment",results:results})})
+      .then(function(r){ if(!r.ok) throw new Error(); f.querySelector("button").style.display="none"; done.style.display="block"; })
+      .catch(function(){ err.textContent="Could not reach the server — please try again."; err.style.display="block"; f.querySelector("button").disabled=false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -40,6 +40,7 @@ export default {
       if (!email) return json({ error: "unauthorized" }, 401);
       if (method === "GET") return json({ courses: await listCourses(env, email) });
       if (method === "POST") return json(await createCourse(env, email));
+      return json({ error: "method not allowed" }, 405);
     }
 
     const m = pathname.match(/^\/api\/courses\/([a-z0-9]+)\/(pause|resume)$/);

@@ -104,13 +104,128 @@
       }
     ]
   },
-  "outline": [],
+  "outline": [
+    {
+      "id": 1,
+      "title": "מהו מס פרוגרסיבי? — הגדרות ומושגי יסוד",
+      "summary": "הכרת המושגים הבסיסיים: מס שולי, מס ממוצע, מדרגות מס ועיקרון עליית אחוז המס עם ההכנסה.",
+      "targetLevel": 6
+    },
+    {
+      "id": 2,
+      "title": "היסטוריה ומקורות המיסוי הפרוגרסיבי",
+      "summary": "סקירה של התפתחות רעיון מס פרוגרסיבי מראשיתו ועד לאימוצו בדמוקרטיות המודרניות.",
+      "targetLevel": 6
+    },
+    {
+      "id": 3,
+      "title": "עקרון היכולת לשלם — Faculty וצדק מס",
+      "summary": "ניתוח עיקרון ה-Ability to Pay כבסיס מוסרי לחלוקת נטל המס לפי הכושר הכלכלי של הנישום.",
+      "targetLevel": 7
+    },
+    {
+      "id": 4,
+      "title": "מס ישיר מול מס עקיף — פרוגרסיביות ורגרסיביות",
+      "summary": "השוואה בין מס הכנסה פרוגרסיבי לבין מע\"מ ומסים עקיפים אחרים, והשלכותיהם על פערי ההכנסה.",
+      "targetLevel": 7
+    },
+    {
+      "id": 5,
+      "title": "צדק חלוקתי — מסגרות תיאורטיות מתחרות",
+      "summary": "הצגת שלושת עמדות הצדק המרכזיות — ליברליזם שוויוני, אוטיליטריזם וליברטריאניזם — ויחסן למיסוי.",
+      "targetLevel": 7
+    },
+    {
+      "id": 6,
+      "title": "רולס והמיסוי הפרוגרסיבי — ליברליזם שוויוני",
+      "summary": "עיון בתיאוריית הצדק של רולס, עקרון המקסימין, וההצדקה לפיזור מחדש של עושר באמצעות מס.",
+      "targetLevel": 8
+    },
+    {
+      "id": 7,
+      "title": "נוזיק וזכות הקניין — הביקורת הליברטריאנית",
+      "summary": "בחינת הטענה הליברטריאנית כי מיסוי ניכר פוגע בזכות הקניין ובחופש הפרט ומגביל את האוטונומיה.",
+      "targetLevel": 8
+    },
+    {
+      "id": 8,
+      "title": "אוטיליטריזם ומיסוי — מקסום רווחה חברתית",
+      "summary": "ניתוח תועלתני של מס פרוגרסיבי: האם הוא ממקסם את הרווחה המצרפית יחסית לחלופותיו?",
+      "targetLevel": 8
+    },
+    {
+      "id": 9,
+      "title": "יעילות כלכלית ועקומת לאפר",
+      "summary": "הבנת המתח בין שיעורי מס גבוהים לתמריצי עבודה והשקעה, והשלכותיו על הכנסות המדינה.",
+      "targetLevel": 9
+    },
+    {
+      "id": 10,
+      "title": "מיסוי פרוגרסיבי בישראל — עשירונים, מדרגות ומס יסף",
+      "summary": "ניתוח מערכת המס הישראלית: שיעורי מס שולי, עשירון עליון ומאפייני הפרוגרסיביות בפועל.",
+      "targetLevel": 9
+    },
+    {
+      "id": 11,
+      "title": "אושר, רווחה סובייקטיבית ולגיטימציה חברתית",
+      "summary": "בחינת ממצאים אמפיריים על הקשר בין מיסוי פרוגרסיבי לרווחת האזרחים ולתמיכה הציבורית במדיניות.",
+      "targetLevel": 9
+    },
+    {
+      "id": 12,
+      "title": "סינתזה — האיזון בין צדק, חירות ויעילות",
+      "summary": "שילוב כל המסגרות לכדי עמדה מנומקת על מיסוי פרוגרסיבי, תוך זיהוי המתחים הבלתי-נפתרים בתאוריה הפוליטית.",
+      "targetLevel": 10
+    }
+  ],
   "progress": {
     "currentModule": 1,
     "attempt": 1,
-    "status": "awaiting-assessment",
-    "delivered": [],
+    "status": "active",
+    "delivered": [
+      {
+        "module": 1,
+        "attempt": 1,
+        "lessonFile": "lessons/lesson-01-attempt1.html",
+        "sentAt": "2026-06-21T07:13:21.464Z"
+      }
+    ],
     "lastQuiz": null
   },
-  "trackHistory": []
+  "trackHistory": [],
+  "startLevel": 6,
+  "level": 6,
+  "placement": {
+    "results": [
+      {
+        "correct": true,
+        "level": 1
+      },
+      {
+        "correct": false,
+        "level": 3
+      },
+      {
+        "correct": true,
+        "level": 4
+      },
+      {
+        "correct": true,
+        "level": 5
+      },
+      {
+        "correct": true,
+        "level": 6
+      },
+      {
+        "correct": false,
+        "level": 7
+      },
+      {
+        "correct": false,
+        "level": 10
+      }
+    ],
+    "rationale": "The learner answered levels 1, 4, 5, and 6 correctly, missed level 3 (an early slip amid otherwise solid lower-band performance — treated as a slip since they went on to nail harder items up to 6), and then missed levels 7 and 10. The crossover from reliable correctness to consistent errors occurs at level 7. The miss at level 3 is treated as a slip given the subsequent correct answers through level 6. Nailing level 6 correctly anchors their ceiling, but the consistent failures at 7 and 10 prevent nudging higher. Final estimate: level 6."
+  }
 }

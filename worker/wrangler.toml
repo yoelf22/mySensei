@@ -1,14 +1,18 @@
 name = "mysensei-quiz-helper"
 main = "src/worker.mjs"
 compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
 
-# Plain vars (safe to commit). Set these to your GitHub account + repo.
 [vars]
 GITHUB_OWNER = "yoelf22"
 GITHUB_REPO = "mySensei"
+APP_BASE_URL = "https://mysensei-quiz-helper.yoelf22mysensei.workers.dev"
 
-# GITHUB_TOKEN is a SECRET — never put it here. Set it once with:
-#   cd worker && npx wrangler secret put GITHUB_TOKEN
-# Deploy with:
-#   cd worker && npx wrangler deploy
-# The deploy prints the worker URL — that becomes QUIZ_WEBHOOK_URL.
+[[d1_databases]]
+binding = "DB"
+database_name = "mysensei"
+database_id = "PLACEHOLDER_SET_AFTER_CREATE"
+
+# Secrets (not here): SESSION_SECRET, GITHUB_TOKEN, GMAIL_APP_PASSWORD is on the Action side.
+# Create the DB once:  cd worker && npx wrangler d1 create mysensei
+# then paste the printed database_id above.

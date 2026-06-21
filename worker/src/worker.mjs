@@ -1,5 +1,6 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage } from "./db.mjs";
+import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { handleInternal } from "./internal.mjs";
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
 import { sendMagicLink } from "./email.mjs";
@@ -86,6 +87,19 @@ export default {
     const html = (s) => new Response(s, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     if (method === "GET" && pathname === "/") return html(loginPage());
     if (method === "GET" && pathname === "/dashboard") return html(dashboardPage());
+
+    const pm = pathname.match(/^\/c\/([a-z0-9]+)\/(.+)$/);
+    if (method === "GET" && pm) {
+      const cid = pm[1], slug = pm[2];
+      if (slug === "onboard") {
+        const row = await getCourse(env, cid);
+        if (!row) return new Response("not found", { status: 404 });
+        return html(renderOnboardHtml({ webhookUrl: `${env.APP_BASE_URL}/submit`, courseId: cid }));
+      }
+      const page = await getPage(env, cid, slug);
+      if (page == null) return new Response("not found", { status: 404 });
+      return html(page);
+    }
 
     return new Response("not found", { status: 404 });
   },

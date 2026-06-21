@@ -4,8 +4,11 @@ name: cadence
 # the learner's timezone, delivery time, cadence, and workweek (curriculum.json).
 # You can also run it by hand (Actions tab → cadence → Run workflow) to force one now.
 on:
-  schedule:
-    - cron: "0 * * * *"
+  # Single-tenant hourly cron disabled — the live curriculum.json course was
+  # retired during the multi-tenant cutover. Plan 2 moves scheduling to the
+  # Worker Cron sweep. Left runnable by hand for any one-off use.
+  # schedule:
+  #   - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       force:

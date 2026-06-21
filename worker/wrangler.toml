@@ -11,7 +11,7 @@ APP_BASE_URL = "https://mysensei-quiz-helper.yoelf22mysensei.workers.dev"
 [[d1_databases]]
 binding = "DB"
 database_name = "mysensei"
-database_id = "PLACEHOLDER_SET_AFTER_CREATE"
+database_id = "54d8ca29-9820-4a03-955f-e831cc0f7601"
 
 # Secrets (not here): SESSION_SECRET, GITHUB_TOKEN, GMAIL_APP_PASSWORD is on the Action side.
 # Create the DB once:  cd worker && npx wrangler d1 create mysensei

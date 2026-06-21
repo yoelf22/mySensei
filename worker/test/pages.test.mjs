@@ -32,5 +32,6 @@ it("dashboard cards link to open the course by status", async () => {
   expect(html).toContain('class="open"');
   expect(html).toContain("/onboard");      // draft target
   expect(html).toContain("/assessment");   // awaiting-assessment target
-  expect(html).toContain("/syllabus");     // built-but-no-lesson target
+  expect(html).toContain("/syllabus");     // awaiting-approval target
+  expect(html).toContain('return "/c/"+id;'); // built courses open the contents page
 });

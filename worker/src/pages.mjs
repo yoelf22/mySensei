@@ -31,11 +31,11 @@ export function dashboardPage() {
 <script>
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
 function openHref(c){
-  if(c.status==="draft")return "/c/"+encodeURIComponent(c.id)+"/onboard";
-  if(c.status==="awaiting-assessment")return "/c/"+encodeURIComponent(c.id)+"/assessment";
-  var d=(c.progress&&c.progress.delivered)||[];
-  if(d.length)return "/c/"+encodeURIComponent(c.id)+"/"+encodeURIComponent(d[d.length-1].lessonFile);
-  return "/c/"+encodeURIComponent(c.id)+"/syllabus";
+  var id=encodeURIComponent(c.id);
+  if(c.status==="draft")return "/c/"+id+"/onboard";
+  if(c.status==="awaiting-assessment")return "/c/"+id+"/assessment";
+  if(c.status==="awaiting-approval")return "/c/"+id+"/syllabus";
+  return "/c/"+id; // contents page: syllabus + all classes
 }
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");

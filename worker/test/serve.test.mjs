@@ -1,7 +1,7 @@
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
 import worker from "../src/worker.mjs";
-import { createCourse, putPage } from "../src/db.mjs";
+import { createCourse, putPage, saveCurriculum } from "../src/db.mjs";
 
 const E = { ...env, APP_BASE_URL: "https://app.example" };
 async function get(path) {
@@ -33,5 +33,27 @@ describe("serve /c/:id/<slug>", () => {
     expect(ok.headers.get("Content-Type")).toContain("text/html");
     expect(await ok.text()).toContain("placement");
     expect((await get(`/c/${id}/lesson-99-attempt9`)).status).toBe(404);
+  });
+});
+
+describe("course contents page /c/:id", () => {
+  it("lists the syllabus and every delivered class", async () => {
+    const { id } = await createCourse(env, "me@x.com");
+    await saveCurriculum(env, id, {
+      subject: "S",
+      settings: { languageCode: "en" },
+      outline: [{ id: 1, title: "Module One" }],
+      progress: { status: "active", delivered: [{ module: 1, attempt: 1, lessonFile: "lesson-01-attempt1", sentAt: "2026-06-21" }] },
+    });
+    const res = await get(`/c/${id}`);
+    expect(res.headers.get("Content-Type")).toContain("text/html");
+    const body = await res.text();
+    expect(body).toContain(`/c/${id}/syllabus`);
+    expect(body).toContain(`/c/${id}/lesson-01-attempt1`);
+    expect(body).toContain("Module One");
+  });
+
+  it("404s the contents page for an unknown course", async () => {
+    expect((await get(`/c/zzzznope1234`)).status).toBe(404);
   });
 });

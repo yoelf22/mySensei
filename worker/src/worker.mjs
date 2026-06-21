@@ -1,6 +1,7 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
+import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
 import { sendMagicLink } from "./email.mjs";
@@ -96,6 +97,14 @@ export default {
     const html = (s) => new Response(s, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     if (method === "GET" && pathname === "/") return html(loginPage());
     if (method === "GET" && pathname === "/dashboard") return html(dashboardPage());
+
+    // Course contents page: the syllabus + every class created, served at /c/:id.
+    const cm = pathname.match(/^\/c\/([a-z0-9]+)\/?$/);
+    if (method === "GET" && cm) {
+      const row = await getCourse(env, cm[1]);
+      if (!row) return new Response("not found", { status: 404 });
+      return html(renderCourseIndexHtml({ curriculum: courseToCurriculum(row), courseId: cm[1] }));
+    }
 
     const pm = pathname.match(/^\/c\/([a-z0-9]+)\/(.+)$/);
     if (method === "GET" && pm) {

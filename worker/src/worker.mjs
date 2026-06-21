@@ -6,7 +6,7 @@ import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs"
 import { sendMagicLink } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch } from "./dispatch.mjs";
-import { loginPage, dashboardPage } from "./pages.mjs";
+import { loginPage, dashboardPage, verifyPage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
@@ -44,8 +44,16 @@ export default {
       return json({ ok: true }); // always 200 — no user enumeration
     }
 
+    // GET shows a confirm page (a button that POSTs the token). Email link
+    // scanners GET this without submitting the form, so they don't burn the
+    // single-use token; only the human's click consumes it.
     if (method === "GET" && pathname === "/auth/verify") {
-      const email = await consumeToken(env, url.searchParams.get("token") || "");
+      const token = (url.searchParams.get("token") || "").replace(/[^a-z0-9]/gi, "");
+      return new Response(verifyPage(token), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+    if (method === "POST" && pathname === "/auth/verify") {
+      const form = await request.formData();
+      const email = await consumeToken(env, String(form.get("token") || ""));
       if (!email) return new Response("This link is invalid or expired. Request a new one.", { status: 400 });
       const cookie = sessionCookie(await signSession(email, env.SESSION_SECRET));
       return new Response(null, { status: 302, headers: { Location: "/dashboard", "Set-Cookie": cookie } });

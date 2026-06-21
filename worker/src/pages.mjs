@@ -15,6 +15,16 @@ fetch("/auth/request",{method:"POST",headers:{"Content-Type":"application/json"}
 .then(function(){document.getElementById("m").textContent="If your email is on the list, a sign-in link is on its way.";});});</script>`);
 }
 
+export function verifyPage(token) {
+  // Scanner-safe sign-in: email link-scanners follow the GET link but don't
+  // submit POST forms, so the single-use token is consumed only when the human
+  // clicks this button — not when a scanner pre-fetches the link.
+  const t = String(token || "").replace(/[^a-z0-9]/gi, "");
+  return SHELL("mySensei — sign in", `<h1>Sign in to mySensei</h1>
+<p class="muted">One more tap to finish signing in.</p>
+<form method="POST" action="/auth/verify"><input type="hidden" name="token" value="${t}"><p><button type="submit">Sign in</button></p></form>`);
+}
+
 export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <script>

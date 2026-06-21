@@ -6,7 +6,7 @@
 
 import { client, structured } from "../lib/claude.mjs";
 import { buildLadder } from "../lib/ladder.mjs";
-import { fetchCourse, saveCourse } from "../lib/course-store.mjs";
+import { fetchCourse, saveCourse } from "./lib/course-store.mjs";
 
 const COURSE_ID = process.env.COURSE_ID;
 if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }

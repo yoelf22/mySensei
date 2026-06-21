@@ -1,17 +1,16 @@
 // Triggered by the "onboard" repository_dispatch. Takes the learner's subject +
 // settings, researches the topic, generates a laddered placement check, renders
-// the assessment page, and writes a partial curriculum.json (awaiting-assessment).
+// the assessment page, and saves a partial curriculum to D1 (awaiting-assessment).
 //
-// Env: ONBOARD_PAYLOAD (JSON of the form fields), ANTHROPIC_API_KEY, QUIZ_WEBHOOK_URL
-// Writes: lessons/assessment.html, curriculum.json (partial)
+// Env: ONBOARD_PAYLOAD (JSON of the form fields), ANTHROPIC_API_KEY, COURSE_ID,
+//      APP_BASE_URL, INTERNAL_TOKEN
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { client, research, structured } from "../lib/claude.mjs";
 import { renderAssessmentHtml } from "../lib/render-assessment.mjs";
+import { saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const COURSE_ID = process.env.COURSE_ID;
+if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
 const QUESTION_COUNT = 7;
 
 const QUESTION_SCHEMA = {
@@ -65,14 +64,14 @@ async function main() {
     4000,
   );
 
-  fs.mkdirSync(path.join(ROOT, "lessons"), { recursive: true });
   const html = renderAssessmentHtml({
     questions,
-    webhookUrl: process.env.QUIZ_WEBHOOK_URL || "",
+    webhookUrl: submitUrl(),
+    courseId: COURSE_ID,
     languageCode: p.languageCode || "en",
     subject: p.subject,
   });
-  fs.writeFileSync(path.join(ROOT, "lessons", "assessment.html"), html);
+  await savePage(COURSE_ID, "assessment", html);
 
   const curriculum = {
     version: 1,
@@ -96,8 +95,8 @@ async function main() {
     progress: { currentModule: 1, attempt: 1, status: "awaiting-assessment", delivered: [], lastQuiz: null },
     trackHistory: [],
   };
-  fs.writeFileSync(path.join(ROOT, "curriculum.json"), JSON.stringify(curriculum, null, 2) + "\n");
-  console.log(`Onboarded "${p.subject}" — wrote assessment page + partial curriculum.`);
+  await saveCourse(COURSE_ID, curriculum);
+  console.log(`Onboarded "${p.subject}" — saved assessment page + partial curriculum to D1.`);
 }
 
 main().catch((err) => {

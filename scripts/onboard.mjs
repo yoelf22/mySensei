@@ -91,6 +91,7 @@ async function main() {
       passThreshold: 0.7,
     },
     researchContext: notes,
+    assessment: { questions },
     outline: [],
     progress: { currentModule: 1, attempt: 1, status: "awaiting-assessment", delivered: [], lastQuiz: null },
     trackHistory: [],

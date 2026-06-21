@@ -179,7 +179,7 @@
     }
   ],
   "progress": {
-    "currentModule": 1,
+    "currentModule": 2,
     "attempt": 1,
     "status": "active",
     "delivered": [
@@ -190,7 +190,14 @@
         "sentAt": "2026-06-21T07:13:21.464Z"
       }
     ],
-    "lastQuiz": null
+    "lastQuiz": {
+      "module": 1,
+      "attempt": 1,
+      "score": 4,
+      "total": 5,
+      "passed": true,
+      "at": "2026-06-21T08:12:42.743Z"
+    }
   },
   "trackHistory": [],
   "startLevel": 6,

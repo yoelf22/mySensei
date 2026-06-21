@@ -1,28 +1,25 @@
-// Generate the next lesson and write it as a self-contained HTML file.
+// Generate the next lesson and store it via the Worker API.
 // Run by the cadence GitHub Action (gated by the learner's schedule) or
 // manually with MYSENSEI_FORCE=1.
 //
-// Reads:  curriculum.json, env ANTHROPIC_API_KEY, env QUIZ_WEBHOOK_URL
-// Writes: lessons/<file>.html, updated curriculum.json
-// Prints: the path of the lesson file (consumed by send-email.mjs via lessons/latest.txt)
+// Reads:  D1 course via Worker API (COURSE_ID, APP_BASE_URL, INTERNAL_TOKEN), env ANTHROPIC_API_KEY
+// Writes: lesson page + updated course via Worker API
 
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
+import { fetchCourse, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 import { nextTarget, needsMoreModules, atMastery } from "../lib/progress.mjs";
 import { shouldSendNow } from "../lib/schedule.mjs";
 import { renderLessonHtml } from "../lib/render-lesson.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL = process.env.MYSENSEI_MODEL || "claude-sonnet-4-6";
+const COURSE_ID = process.env.COURSE_ID;
+if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
 
-function readCurriculum() {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, "curriculum.json"), "utf8"));
+async function readCurriculum() {
+  return await fetchCourse(COURSE_ID);
 }
-function writeCurriculum(c) {
-  fs.writeFileSync(path.join(ROOT, "curriculum.json"), JSON.stringify(c, null, 2) + "\n");
-}
+async function writeCurriculum(c) { await saveCourse(COURSE_ID, c); }
 function textOf(message) {
   return (message.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
 }
@@ -222,12 +219,10 @@ async function masteryPage(client, curriculum) {
 // --- main -------------------------------------------------------------------
 
 async function main() {
-  if (!fs.existsSync(path.join(ROOT, "curriculum.json"))) {
-    console.log("No curriculum.json yet — run /mySensei to onboard. Nothing to send.");
-    setOutput({ sent: "false" });
-    return;
-  }
-  const curriculum = readCurriculum();
+  let curriculum;
+  try { curriculum = await readCurriculum(); }
+  catch (e) { console.log("No course to generate for:", e.message); setOutput({ sent: false, path: "" }); return; }
+
   const force = process.env.MYSENSEI_FORCE === "1";
 
   if (!force && !shouldSendNow(curriculum.settings, new Date())) {
@@ -241,8 +236,6 @@ async function main() {
     process.exit(1);
   }
   const client = new Anthropic();
-  const webhookUrl = process.env.QUIZ_WEBHOOK_URL || "";
-  fs.mkdirSync(path.join(ROOT, "lessons"), { recursive: true });
 
   let lesson, fileBase;
 
@@ -265,25 +258,22 @@ async function main() {
     fileBase = `lesson-${String(moduleId).padStart(2, "0")}-attempt${attempt}`;
   }
 
-  const html = renderLessonHtml({ curriculum, lesson, webhookUrl });
-  const relPath = path.join("lessons", `${fileBase}.html`);
-  fs.writeFileSync(path.join(ROOT, relPath), html);
+  const html = renderLessonHtml({ curriculum, lesson, webhookUrl: submitUrl(), courseId: COURSE_ID });
+  await savePage(COURSE_ID, fileBase, html);
 
   curriculum.progress.delivered = curriculum.progress.delivered || [];
   curriculum.progress.delivered.push({
     module: lesson.moduleId,
     attempt: lesson.attempt,
-    lessonFile: relPath,
+    lessonFile: fileBase,
     sentAt: new Date().toISOString(),
   });
   // Reinforcement consumed — clear the missed concepts so they're not re-taught forever.
   if (curriculum.progress.lastQuiz) curriculum.progress.lastQuiz.missedConcepts = [];
-  writeCurriculum(curriculum);
+  await writeCurriculum(curriculum);
 
-  // Hand the path to the emailer.
-  fs.writeFileSync(path.join(ROOT, "lessons", "latest.txt"), relPath + "\n");
-  setOutput({ sent: "true", path: relPath });
-  console.log(relPath);
+  setOutput({ sent: true, path: fileBase });
+  console.log(fileBase);
 }
 
 main().catch((err) => {

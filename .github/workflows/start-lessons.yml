@@ -1,14 +1,14 @@
 name: start-lessons
 
 # Triggered when the learner approves their syllabus (via the worker). Emails
-# Lesson 1 — which build-curriculum already generated and published — so it
-# lands immediately, with no generation wait.
+# Lesson 1 — which build-curriculum already generated — so it lands immediately,
+# with no generation wait.
 on:
   repository_dispatch:
     types: [syllabus-approved]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: mysensei-start-lessons
@@ -29,5 +29,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_FROM: ${{ vars.MAIL_FROM }}
           MAIL_TO: ${{ vars.MAIL_TO }}
-          LESSONS_BASE_URL: ${{ vars.LESSONS_BASE_URL }}
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
         run: npm run --silent send

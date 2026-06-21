@@ -3,9 +3,16 @@ import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countAc
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
 import { sendMagicLink } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
+import { buildDispatch } from "./dispatch.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...extra } });
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
 async function sessionEmail(request, env) {
   const tok = getCookie(request, "session");
@@ -17,6 +24,8 @@ export default {
     const url = new URL(request.url);
     const { pathname } = url;
     const method = request.method;
+
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
     if (method === "POST" && pathname === "/auth/request") {
       let email = "";
@@ -53,6 +62,20 @@ export default {
       if ((await countActive(env, email)) >= 3) return json({ error: "cap" }, 409);
       await setStatus(env, course.id, "active");
       return json({ ok: true });
+    }
+
+    if (method === "POST" && pathname === "/submit") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400, CORS); }
+      const d = buildDispatch(body);
+      if (d.error) return json({ error: d.error }, 400, CORS);
+      const gh = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/dispatches`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "User-Agent": "mySensei-worker", "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: d.event_type, client_payload: d.client_payload }),
+      });
+      if (!gh.ok) return json({ error: "dispatch failed", status: gh.status }, 502, CORS);
+      return json({ ok: true }, 200, CORS);
     }
 
     return new Response("not found", { status: 404 });

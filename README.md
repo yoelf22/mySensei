@@ -219,6 +219,10 @@ the Worker and the Actions. Worker and D1 behavior is tested with
 **Next (Plan 2b)**
 - An hourly Cloudflare Cron sweep so lessons after the first are delivered on each
   course's cadence automatically.
+- An owner "Invite" box on the dashboard that adds a learner to the allowlist and
+  emails them an invite, so onboarding doesn't need a CLI insert or knowing the URL.
+- Owner notification when a magic-link / email send fails (today, send success or
+  failure is only visible in the GitHub Action run logs).
 - Course archive/delete and post-onboarding settings edits from the dashboard.
 - Cleanup of the legacy single-tenant workflows.
 

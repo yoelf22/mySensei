@@ -72,7 +72,7 @@ export function courseToCurriculum(row) {
     assessment,
     placement,
     outline: j(row.outline) || [],
-    progress: j(row.progress),
+    progress: j(row.progress) || { status: row.status || "draft" },
     trackHistory: [],
   };
 }

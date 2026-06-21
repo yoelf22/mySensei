@@ -1,5 +1,6 @@
 // worker/src/worker.mjs
 import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive } from "./db.mjs";
+import { handleInternal } from "./internal.mjs";
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
 import { sendMagicLink } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
@@ -25,6 +26,9 @@ export default {
     const url = new URL(request.url);
     const { pathname } = url;
     const method = request.method;
+
+    const internalRes = await handleInternal(request, env, url);
+    if (internalRes) return internalRes;
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 

@@ -104,8 +104,10 @@ const LESSON_SCHEMA = {
           question: { type: "string" },
           options: { type: "array", items: { type: "string" } },
           correctIndex: { type: "integer" },
+          concept: { type: "string" },
+          explanation: { type: "string" },
         },
-        required: ["question", "options", "correctIndex"],
+        required: ["question", "options", "correctIndex", "concept", "explanation"],
       },
     },
   },
@@ -117,16 +119,21 @@ async function authorLesson(client, curriculum, module, attempt, researchNotes) 
   const retry = attempt > 1
     ? `This is attempt ${attempt}: the learner did NOT pass last time, so teach the SAME concept with DIFFERENT explanations, examples, and media than before.\n`
     : "";
+  const missed = (curriculum.progress && curriculum.progress.lastQuiz && curriculum.progress.lastQuiz.missedConcepts) || [];
+  const reinforce = missed.length
+    ? `The learner recently got these points wrong — weave a brief reinforcement of them into this lesson where it fits naturally: ${missed.join("; ")}.\n`
+    : "";
   const prompt =
     `Write a ${s.chunkMinutes}-minute micro-lesson entirely in ${s.language}.\n` +
     `Subject: ${curriculum.subject}\nModule: ${module.title} — ${module.summary || ""}\n` +
-    `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n${retry}\n` +
+    `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n${retry}${reinforce}\n` +
     `Use these research notes for grounding and media:\n---\n${researchNotes}\n---\n\n` +
     `Rules: Everything (title, body, key idea, quiz questions and options) in ${s.language}. ` +
     `Keep it light and concrete. For media, ONLY use URLs that appear verbatim in the research notes; ` +
     `if a real image or link URL isn't present, set that field to an empty string. ` +
     `Write a 3–5 question multiple-choice quiz that genuinely checks understanding; each question 3–4 options; ` +
-    `correctIndex is the 0-based index of the right option.`;
+    `correctIndex is the 0-based index of the right option. For each question also include a short "concept" label ` +
+    `(the idea it tests, in ${s.language}) and a one-sentence "explanation" of why the correct answer is right (in ${s.language}).`;
 
   const resp = await client.messages.create({
     model: MODEL,
@@ -269,6 +276,8 @@ async function main() {
     lessonFile: relPath,
     sentAt: new Date().toISOString(),
   });
+  // Reinforcement consumed — clear the missed concepts so they're not re-taught forever.
+  if (curriculum.progress.lastQuiz) curriculum.progress.lastQuiz.missedConcepts = [];
   writeCurriculum(curriculum);
 
   // Hand the path to the emailer.

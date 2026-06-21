@@ -28,6 +28,7 @@ jobs:
           QUIZ_ATTEMPT: ${{ github.event.client_payload.attempt }}
           QUIZ_SCORE: ${{ github.event.client_payload.score }}
           QUIZ_TOTAL: ${{ github.event.client_payload.total }}
+          QUIZ_MISSED: ${{ toJSON(github.event.client_payload.missed) }}
         run: npm run --silent record
 
       - name: Commit progress

@@ -22,11 +22,20 @@ function intEnv(name) {
 }
 
 const curriculum = JSON.parse(fs.readFileSync(file, "utf8"));
+let missed = [];
+try {
+  const m = JSON.parse(process.env.QUIZ_MISSED || "[]");
+  if (Array.isArray(m)) missed = m.map(String);
+} catch {
+  missed = [];
+}
+
 const result = {
   module: intEnv("QUIZ_MODULE"),
   attempt: parseInt(process.env.QUIZ_ATTEMPT ?? "1", 10) || 1,
   score: intEnv("QUIZ_SCORE"),
   total: intEnv("QUIZ_TOTAL"),
+  missed,
   at: new Date().toISOString(),
 };
 

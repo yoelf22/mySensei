@@ -59,7 +59,8 @@ function buildDispatch(body) {
   if (![module, score, total].every(Number.isInteger) || total <= 0 || score < 0 || score > total) {
     return { error: "invalid result" };
   }
-  return { event_type: "quiz-result", client_payload: { module, attempt, score, total } };
+  const missed = Array.isArray(body.missed) ? body.missed.map(String).slice(0, 20) : [];
+  return { event_type: "quiz-result", client_payload: { module, attempt, score, total, missed } };
 }
 
 export default {

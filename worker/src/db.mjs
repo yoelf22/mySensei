@@ -31,6 +31,13 @@ export async function createCourse(env, ownerEmail) {
   return { id };
 }
 
+export async function listActiveCourses(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT id, settings FROM courses WHERE status = 'active'",
+  ).all();
+  return results.map((r) => ({ id: r.id, settings: r.settings ? JSON.parse(r.settings) : {} }));
+}
+
 export async function listCourses(env, ownerEmail) {
   const { results } = await env.DB.prepare(
     "SELECT * FROM courses WHERE owner_email = ? ORDER BY created_at DESC",

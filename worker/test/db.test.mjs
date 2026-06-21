@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -83,6 +83,20 @@ describe("syllabus front-matter column", () => {
     expect(back.syllabus.title).toBe("T");
     expect(back.syllabus.subtitle).toBe("Sub");
     expect(back.syllabus.introduction).toBe("Intro");
+  });
+});
+
+describe("listActiveCourses", () => {
+  it("returns only active courses with parsed settings", async () => {
+    const a = await createCourse(env, "me@x.com");
+    const b = await createCourse(env, "me@x.com");
+    await saveCurriculum(env, a.id, { settings: { cadence: "daily" }, progress: { status: "active" } });
+    await saveCurriculum(env, b.id, { settings: { cadence: "weekly" }, progress: { status: "paused" } });
+    const active = await listActiveCourses(env);
+    const ids = active.map((c) => c.id);
+    expect(ids).toContain(a.id);
+    expect(ids).not.toContain(b.id);
+    expect(active.find((c) => c.id === a.id).settings.cadence).toBe("daily");
   });
 });
 

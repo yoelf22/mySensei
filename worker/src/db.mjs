@@ -74,6 +74,7 @@ export function courseToCurriculum(row) {
     placement,
     outline: j(row.outline) || [],
     progress: j(row.progress) || { status: row.status || "draft" },
+    syllabus: j(row.syllabus),
     trackHistory: [],
   };
 }
@@ -83,12 +84,12 @@ export async function saveCurriculum(env, id, c) {
   const status = (c.progress && c.progress.status) || "draft";
   await env.DB.prepare(
     `UPDATE courses SET subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
-       research=?, assessment=?, outline=?, progress=?, updated_at=? WHERE id=?`,
+       research=?, assessment=?, outline=?, progress=?, syllabus=?, updated_at=? WHERE id=?`,
   ).bind(
     c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
     c.startLevel ?? null, c.level ?? null, c.researchContext || "",
     assessmentCol, JSON.stringify(c.outline || []), JSON.stringify(c.progress || null),
-    now(), id,
+    JSON.stringify(c.syllabus ?? null), now(), id,
   ).run();
 }
 

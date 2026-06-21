@@ -76,9 +76,32 @@ async function main() {
     targetLevel: ladder[i],
   }));
 
+  // 3. Syllabus front-matter (Claude writes the title, subtitle, and introduction).
+  const front = await structured(
+    c,
+    `Write the front-matter for a course in ${curriculum.settings.language} on "${curriculum.subject}"` +
+      `${curriculum.angle ? ` (angle: ${curriculum.angle})` : ""}, pitched at learner level ${level}/10. ` +
+      `Return {title, subtitle, introduction}. "title" is an engaging course title; "subtitle" is a one-line tagline. ` +
+      `"introduction" is 2–3 short paragraphs (plain text, a blank line between paragraphs) that define the main terms ` +
+      `the learner will meet and lay out the course narrative — how the modules build from here toward mastery. ` +
+      `Ground it in this module outline: ${JSON.stringify(outline.map((m) => m.title))} and these notes:\n---\n${curriculum.researchContext || ""}\n---`,
+    {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        title: { type: "string" },
+        subtitle: { type: "string" },
+        introduction: { type: "string" },
+      },
+      required: ["title", "subtitle", "introduction"],
+    },
+    2000,
+  );
+
   curriculum.startLevel = level;
   curriculum.level = level;
   curriculum.outline = outline;
+  curriculum.syllabus = { title: front.title, subtitle: front.subtitle, introduction: front.introduction };
   curriculum.progress = { currentModule: 1, attempt: 1, status: "active", delivered: [], lastQuiz: null };
   curriculum.placement = { results, rationale: judged.rationale };
 

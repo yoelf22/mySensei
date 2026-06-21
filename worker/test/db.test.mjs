@@ -72,6 +72,20 @@ describe("curriculum mapping + pages", () => {
   });
 });
 
+describe("syllabus front-matter column", () => {
+  it("round-trips curriculum.syllabus through the new column", async () => {
+    const { id } = await createCourse(env, "me@x.com");
+    await saveCurriculum(env, id, {
+      progress: { status: "active" },
+      syllabus: { title: "T", subtitle: "Sub", introduction: "Intro" },
+    });
+    const back = courseToCurriculum(await rawRow(env, id));
+    expect(back.syllabus.title).toBe("T");
+    expect(back.syllabus.subtitle).toBe("Sub");
+    expect(back.syllabus.introduction).toBe("Intro");
+  });
+});
+
 // helper: read the raw row (columns un-parsed) for mapping tests
 async function rawRow(env, id) {
   return env.DB.prepare("SELECT * FROM courses WHERE id = ?").bind(id).first();

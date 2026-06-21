@@ -1,0 +1,32 @@
+name: deliver-lesson
+on:
+  repository_dispatch:
+    types: [lesson-due]
+permissions:
+  contents: read
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - name: Generate the next lesson
+        id: gen
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run generate
+      - name: Email the lesson
+        if: steps.gen.outputs.sent == 'true'
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+        run: npm run send

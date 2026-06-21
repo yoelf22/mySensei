@@ -27,6 +27,7 @@
   <form id="f">
     <label>Subject<textarea name="subject" required placeholder="A topic, a question, or a goal — in your own words"></textarea></label>
     <label>Any particular angle or goal? <span class="hint">(optional)</span><input type="text" name="angle" placeholder="What would make this time well spent"></label>
+    <label>Your email <span class="hint">(where your placement check and lessons are sent)</span><input type="email" name="email" required placeholder="you@example.com"></label>
     <label>Language</label><input type="text" name="language" value="English">
     <label>Lesson length</label>
     <div class="row">
@@ -61,6 +62,7 @@
     var payload = {
       type:"onboard",
       subject:(d.get("subject")||"").trim(),
+      email:(d.get("email")||"").trim(),
       angle:(d.get("angle")||"").trim(),
       language:lang,
       languageCode: LANG[lang.toLowerCase()] || lang.slice(0,2).toLowerCase(),
@@ -71,6 +73,7 @@
       workweekDays: [0,1,2,3,4,5,6]
     };
     if(!payload.subject){ err.textContent="Please enter a subject."; err.style.display="block"; return; }
+    if(!payload.email){ err.textContent="Please enter your email."; err.style.display="block"; return; }
     if(!HOOK){ err.textContent="No submit endpoint configured."; err.style.display="block"; return; }
     f.querySelector("button").disabled = true;
     fetch(HOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})

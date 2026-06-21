@@ -7,7 +7,7 @@
 
 import { client, research, structured } from "../lib/claude.mjs";
 import { renderAssessmentHtml } from "../lib/render-assessment.mjs";
-import { saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
+import { fetchCourse, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 
 const COURSE_ID = process.env.COURSE_ID;
 if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
@@ -47,6 +47,10 @@ async function main() {
   }
   const c = client();
 
+  // The lesson/placement recipient is the course owner (the logged-in,
+  // invited learner). No email is collected on the form — read it from D1.
+  const existing = await fetchCourse(COURSE_ID);
+
   const notes = await research(
     c,
     `Research "${p.subject}"${p.angle ? ` with this angle: ${p.angle}` : ""}, for a course in ${p.language}. ` +
@@ -85,7 +89,7 @@ async function main() {
       deliveryTime: p.deliveryTime || "07:00",
       timezone: p.timezone || "UTC",
       workweekDays: Array.isArray(p.workweekDays) ? p.workweekDays : [0, 1, 2, 3, 4, 5, 6],
-      email: p.email || process.env.MAIL_TO || "",
+      email: existing.ownerEmail || process.env.MAIL_TO || "",
       model: process.env.MYSENSEI_MODEL || "claude-sonnet-4-6",
       passThreshold: 0.7,
     },

@@ -63,6 +63,7 @@ export function courseToCurriculum(row) {
   const { placement = null, ...assessment } = assessmentCol;
   return {
     version: 1,
+    ownerEmail: row.owner_email || "",
     subject: row.subject || "",
     angle: row.angle || "",
     startLevel: row.start_level,

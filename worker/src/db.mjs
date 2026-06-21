@@ -52,3 +52,53 @@ export async function countActive(env, ownerEmail) {
   ).bind(norm(ownerEmail)).first();
   return row.n;
 }
+
+// Accepts EITHER a raw row (JSON columns as strings, e.g. from a direct
+// SELECT) OR a parsed row (JSON columns already objects, e.g. from getCourse).
+export function courseToCurriculum(row) {
+  if (!row) return null;
+  const j = (x) => (typeof x === "string" ? (x ? JSON.parse(x) : null) : (x ?? null));
+  const settings = j(row.settings) || {};
+  const assessmentCol = j(row.assessment) || {};
+  const { placement = null, ...assessment } = assessmentCol;
+  return {
+    version: 1,
+    subject: row.subject || "",
+    angle: row.angle || "",
+    startLevel: row.start_level,
+    level: row.level,
+    settings,
+    researchContext: row.research || "",
+    assessment,
+    placement,
+    outline: j(row.outline) || [],
+    progress: j(row.progress),
+    trackHistory: [],
+  };
+}
+
+export async function saveCurriculum(env, id, c) {
+  const assessmentCol = JSON.stringify({ ...(c.assessment || {}), placement: c.placement ?? null });
+  const status = (c.progress && c.progress.status) || "draft";
+  await env.DB.prepare(
+    `UPDATE courses SET subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
+       research=?, assessment=?, outline=?, progress=?, updated_at=? WHERE id=?`,
+  ).bind(
+    c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
+    c.startLevel ?? null, c.level ?? null, c.researchContext || "",
+    assessmentCol, JSON.stringify(c.outline || []), JSON.stringify(c.progress || null),
+    now(), id,
+  ).run();
+}
+
+export async function getPage(env, courseId, path) {
+  const row = await env.DB.prepare("SELECT html FROM pages WHERE course_id=? AND path=?").bind(courseId, path).first();
+  return row ? row.html : null;
+}
+
+export async function putPage(env, courseId, path, html) {
+  await env.DB.prepare(
+    `INSERT INTO pages(course_id, path, html, updated_at) VALUES(?,?,?,?)
+       ON CONFLICT(course_id, path) DO UPDATE SET html=excluded.html, updated_at=excluded.updated_at`,
+  ).bind(courseId, path, html, now()).run();
+}

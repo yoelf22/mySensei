@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchCourse, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
-import { nextTarget, needsMoreModules, atMastery } from "../lib/progress.mjs";
+import { nextTarget, needsMoreModules, atMastery, alreadyDelivered } from "../lib/progress.mjs";
 import { shouldSendNow } from "../lib/schedule.mjs";
 import { renderLessonHtml } from "../lib/render-lesson.mjs";
 
@@ -244,6 +244,11 @@ async function main() {
     fileBase = `mastery-${Date.now()}`;
   } else {
     let { module, moduleId, attempt } = nextTarget(curriculum);
+    if (alreadyDelivered(curriculum, { moduleId, attempt })) {
+      console.log(`Module ${moduleId} attempt ${attempt} already delivered — waiting for the learner's quiz.`);
+      setOutput({ sent: false, path: "" });
+      return;
+    }
     if (!module && needsMoreModules(curriculum)) {
       module = await extendOutline(client, curriculum);
       moduleId = module.id;

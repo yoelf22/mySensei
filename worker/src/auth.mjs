@@ -29,6 +29,7 @@ export async function verifySession(token, secret, nowMs = Date.now()) {
   if (mid < 0) return null;
   const exp = rest.slice(mid + 1);
   const email = rest.slice(0, mid);
+  if (!email) return null;
   if ((await hmac(`${email}.${exp}`, secret)) !== sig) return null;
   if (Number(exp) < nowMs) return null;
   return email;
@@ -43,8 +44,9 @@ export async function mintToken(env, email) {
 }
 
 export async function consumeToken(env, token) {
-  const row = await env.DB.prepare("SELECT email, expires_at, used FROM magic_tokens WHERE token = ?").bind(token).first();
-  if (!row || row.used || row.expires_at < now()) return null;
-  await env.DB.prepare("UPDATE magic_tokens SET used = 1 WHERE token = ?").bind(token).run();
+  const row = await env.DB.prepare("SELECT email, expires_at FROM magic_tokens WHERE token = ?").bind(token).first();
+  if (!row || row.expires_at < now()) return null;
+  const result = await env.DB.prepare("UPDATE magic_tokens SET used = 1 WHERE token = ? AND used = 0").bind(token).run();
+  if (result.meta.changes === 0) return null;
   return row.email;
 }

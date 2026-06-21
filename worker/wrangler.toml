@@ -16,3 +16,6 @@ database_id = "54d8ca29-9820-4a03-955f-e831cc0f7601"
 # Secrets (not here): SESSION_SECRET, GITHUB_TOKEN, GMAIL_APP_PASSWORD is on the Action side.
 # Create the DB once:  cd worker && npx wrangler d1 create mysensei
 # then paste the printed database_id above.
+
+[triggers]
+crons = ["0 * * * *"]

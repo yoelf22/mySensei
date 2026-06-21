@@ -7,6 +7,7 @@ import { sendMagicLink } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch } from "./dispatch.mjs";
 import { loginPage, dashboardPage } from "./pages.mjs";
+import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...extra } });
@@ -102,5 +103,9 @@ export default {
     }
 
     return new Response("not found", { status: 404 });
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runSweep(env, new Date(event.scheduledTime)));
   },
 };

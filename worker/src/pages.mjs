@@ -18,17 +18,20 @@ fetch("/auth/request",{method:"POST",headers:{"Content-Type":"application/json"}
 export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <script>
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
   el.innerHTML=d.courses.map(function(c){
-    var prog=c.progress?("module "+c.progress.currentModule):"";
-    return '<div class="c"><b>'+(c.subject||"(new course)")+'</b><div class="muted">'+c.status+" · level "+(c.level||"?")+" · "+prog+'</div>'+
-      (c.status==="paused"?'<button onclick="act(\''+c.id+'\',\'resume\')">Resume</button>':'')+
-      (c.status==="active"?'<button onclick="act(\''+c.id+'\',\'pause\')">Pause</button>':'')+'</div>';
+    var prog=c.progress?("module "+esc(c.progress.currentModule)):"";
+    var btn="";
+    if(c.status==="paused")btn='<button data-act="resume" data-id="'+esc(c.id)+'">Resume</button>';
+    if(c.status==="active")btn='<button data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b><div class="muted">'+esc(c.status)+" · level "+esc(c.level||"?")+" · "+prog+'</div>'+btn+'</div>';
   }).join("");
 });}
 function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}
+document.getElementById("list").addEventListener("click",function(e){var b=e.target.closest("button[data-act]");if(b)act(b.getAttribute("data-id"),b.getAttribute("data-act"));});
 document.getElementById("new").addEventListener("click",function(){fetch("/api/courses",{method:"POST"}).then(function(r){return r.json();}).then(function(d){location.href="/c/"+d.id+"/onboard";});});
 load();
 </script>`);

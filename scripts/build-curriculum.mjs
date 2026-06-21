@@ -1,25 +1,22 @@
 // Triggered by the "assessment-result" repository_dispatch. Has Claude judge the
 // learner's level from the answer pattern, builds the outline with the chunk-size
-// ladder, and writes the full curriculum.json (status active).
+// ladder, and writes the full curriculum to D1 (status active).
 //
-// Env: ASSESSMENT_RESULTS (JSON [{level, correct}]), ANTHROPIC_API_KEY
-// Reads/writes: curriculum.json (partial -> full)
+// Env: ASSESSMENT_RESULTS (JSON [{level, correct}]), ANTHROPIC_API_KEY, COURSE_ID
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { client, structured } from "../lib/claude.mjs";
 import { buildLadder } from "../lib/ladder.mjs";
+import { fetchCourse, saveCourse } from "../lib/course-store.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const file = path.join(ROOT, "curriculum.json");
+const COURSE_ID = process.env.COURSE_ID;
+if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
 
 async function main() {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error("ANTHROPIC_API_KEY is not set.");
     process.exit(1);
   }
-  const curriculum = JSON.parse(fs.readFileSync(file, "utf8"));
+  const curriculum = await fetchCourse(COURSE_ID);
   const results = JSON.parse(process.env.ASSESSMENT_RESULTS || "[]");
   if (!Array.isArray(results) || results.length === 0) {
     console.error("ASSESSMENT_RESULTS missing.");
@@ -85,7 +82,7 @@ async function main() {
   curriculum.progress = { currentModule: 1, attempt: 1, status: "active", delivered: [], lastQuiz: null };
   curriculum.placement = { results, rationale: judged.rationale };
 
-  fs.writeFileSync(file, JSON.stringify(curriculum, null, 2) + "\n");
+  await saveCourse(COURSE_ID, curriculum);
   console.log(`Judged level ${level} (${judged.rationale}). Built ${outline.length} modules; ladder ${ladder.join(",")}.`);
 }
 

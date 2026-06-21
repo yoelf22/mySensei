@@ -25,7 +25,7 @@ async function main() {
   }
 
   const from = process.env.MAIL_FROM;
-  const to = process.env.MAIL_TO || from;
+  const to = curriculum.settings.email || process.env.MAIL_TO || from;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!from || !pass) {
     console.error("MAIL_FROM and GMAIL_APP_PASSWORD must be set.");

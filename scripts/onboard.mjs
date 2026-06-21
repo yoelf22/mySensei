@@ -86,7 +86,7 @@ async function main() {
       deliveryTime: p.deliveryTime || "07:00",
       timezone: p.timezone || "UTC",
       workweekDays: Array.isArray(p.workweekDays) ? p.workweekDays : [0, 1, 2, 3, 4, 5, 6],
-      email: process.env.MAIL_TO || "",
+      email: p.email || process.env.MAIL_TO || "",
       model: process.env.MYSENSEI_MODEL || "claude-sonnet-4-6",
       passThreshold: 0.7,
     },

@@ -25,10 +25,12 @@ function buildDispatch(body) {
 
   if (type === "onboard") {
     if (!body.subject || typeof body.subject !== "string") return { error: "missing subject" };
+    if (!body.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email)) return { error: "missing or invalid email" };
     return {
       event_type: "onboard",
       client_payload: {
         subject: body.subject,
+        email: body.email,
         angle: body.angle || "",
         language: body.language || "English",
         languageCode: body.languageCode || "en",

@@ -81,9 +81,11 @@ async function main() {
     c,
     `Write the front-matter for a course in ${curriculum.settings.language} on "${curriculum.subject}"` +
       `${curriculum.angle ? ` (angle: ${curriculum.angle})` : ""}, pitched at learner level ${level}/10. ` +
-      `Return {title, subtitle, introduction}. "title" is an engaging course title; "subtitle" is a one-line tagline. ` +
+      `Return {title, subtitle, introduction, bibliography}. "title" is an engaging course title; "subtitle" is a one-line tagline. ` +
       `"introduction" is 2–3 short paragraphs (plain text, a blank line between paragraphs) that define the main terms ` +
       `the learner will meet and lay out the course narrative — how the modules build from here toward mastery. ` +
+      `"bibliography" is 5–8 real, well-known sources (books or major essays) on the subject, each { title, author, note } ` +
+      `with a one-line note on what it offers; use genuine works and do not invent citations. ` +
       `Ground it in this module outline: ${JSON.stringify(outline.map((m) => m.title))} and these notes:\n---\n${curriculum.researchContext || ""}\n---`,
     {
       type: "object",
@@ -92,16 +94,25 @@ async function main() {
         title: { type: "string" },
         subtitle: { type: "string" },
         introduction: { type: "string" },
+        bibliography: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: { title: { type: "string" }, author: { type: "string" }, note: { type: "string" } },
+            required: ["title", "author", "note"],
+          },
+        },
       },
-      required: ["title", "subtitle", "introduction"],
+      required: ["title", "subtitle", "introduction", "bibliography"],
     },
-    2000,
+    3000,
   );
 
   curriculum.startLevel = level;
   curriculum.level = level;
   curriculum.outline = outline;
-  curriculum.syllabus = { title: front.title, subtitle: front.subtitle, introduction: front.introduction };
+  curriculum.syllabus = { title: front.title, subtitle: front.subtitle, introduction: front.introduction, bibliography: front.bibliography };
   curriculum.progress = { currentModule: 1, attempt: 1, status: "active", delivered: [], lastQuiz: null };
   curriculum.placement = { results, rationale: judged.rationale };
 

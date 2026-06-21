@@ -25,3 +25,12 @@ it("dashboard wires course actions via delegation, not inline onclick", async ()
   expect(html).toContain("esc("); // interpolated fields are HTML-escaped
   expect(html).not.toContain("onclick="); // no fragile inline handlers
 });
+
+it("dashboard cards link to open the course by status", async () => {
+  const html = await (await get("/dashboard")).text();
+  expect(html).toContain("function openHref(c)");
+  expect(html).toContain('class="open"');
+  expect(html).toContain("/onboard");      // draft target
+  expect(html).toContain("/assessment");   // awaiting-assessment target
+  expect(html).toContain("/syllabus");     // built-but-no-lesson target
+});

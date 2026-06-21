@@ -5,7 +5,8 @@ const SHELL = (title, body) => `<!doctype html><html lang="en"><head><meta chars
 button{font:inherit;background:#b4541f;color:#fff;border:0;border-radius:.4rem;padding:.6rem 1.2rem;cursor:pointer}
 input{font:inherit;padding:.6rem;border:1px solid #e7e1d5;border-radius:.4rem;width:100%}
 .c{border:1px solid #e7e1d5;border-radius:.5rem;padding:1rem;margin:1rem 0;font-family:system-ui,sans-serif}
-.muted{color:#6b6457;font-family:system-ui,sans-serif}</style></head><body>${body}</body></html>`;
+.muted{color:#6b6457;font-family:system-ui,sans-serif}
+a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:system-ui,sans-serif;font-weight:bold;text-decoration:none}</style></head><body>${body}</body></html>`;
 
 export function loginPage() {
   return SHELL("mySensei — sign in", `<h1>mySensei</h1><p class="muted">Enter your email; we'll send a sign-in link.</p>
@@ -29,6 +30,13 @@ export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <script>
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
+function openHref(c){
+  if(c.status==="draft")return "/c/"+encodeURIComponent(c.id)+"/onboard";
+  if(c.status==="awaiting-assessment")return "/c/"+encodeURIComponent(c.id)+"/assessment";
+  var d=(c.progress&&c.progress.delivered)||[];
+  if(d.length)return "/c/"+encodeURIComponent(c.id)+"/"+encodeURIComponent(d[d.length-1].lessonFile);
+  return "/c/"+encodeURIComponent(c.id)+"/syllabus";
+}
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
@@ -37,7 +45,8 @@ function load(){fetch("/api/courses").then(function(r){if(r.status===401){locati
     var btn="";
     if(c.status==="paused")btn='<button data-act="resume" data-id="'+esc(c.id)+'">Resume</button>';
     if(c.status==="active")btn='<button data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
-    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b><div class="muted">'+esc(c.status)+" · level "+esc(c.level||"?")+" · "+prog+'</div>'+btn+'</div>';
+    var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b><div class="muted">'+esc(c.status)+" · level "+esc(c.level||"?")+" · "+prog+'</div><p>'+open+btn+'</p></div>';
   }).join("");
 });}
 function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}

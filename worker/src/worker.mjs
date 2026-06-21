@@ -4,6 +4,7 @@ import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs"
 import { sendMagicLink } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch } from "./dispatch.mjs";
+import { loginPage, dashboardPage } from "./pages.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...extra } });
@@ -77,6 +78,10 @@ export default {
       if (!gh.ok) return json({ error: "dispatch failed", status: gh.status }, 502, CORS);
       return json({ ok: true }, 200, CORS);
     }
+
+    const html = (s) => new Response(s, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    if (method === "GET" && pathname === "/") return html(loginPage());
+    if (method === "GET" && pathname === "/dashboard") return html(dashboardPage());
 
     return new Response("not found", { status: 404 });
   },

@@ -36,4 +36,5 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add curriculum.json
           git commit -m "quiz: module ${{ github.event.client_payload.module }} recorded" || echo "nothing to commit"
+          git pull --rebase origin main
           git push

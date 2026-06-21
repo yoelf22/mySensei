@@ -1,32 +1,24 @@
-// Email the most recently generated lesson as an HTML attachment via Gmail SMTP.
+// Email the most recently delivered lesson as a Worker page link via Gmail SMTP.
+// Reads the course from D1 via the Worker API.
 //
 // Env: GMAIL_APP_PASSWORD (required), MAIL_FROM (Gmail address that owns the app
-//      password), MAIL_TO (recipient; defaults to MAIL_FROM).
+//      password), COURSE_ID (required), APP_BASE_URL (required),
+//      INTERNAL_TOKEN (required), MAIL_TO (defaults to course email).
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
+import { fetchCourse } from "./lib/course-store.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
-}
+const COURSE_ID = process.env.COURSE_ID;
+if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
 
 async function main() {
-  const latestPath = path.join(ROOT, "lessons", "latest.txt");
-  if (!fs.existsSync(latestPath)) {
-    console.log("No lesson to send (lessons/latest.txt missing) — exiting.");
-    return;
-  }
-  const relPath = read("lessons/latest.txt").trim();
-  if (!relPath) {
-    console.log("No lesson path recorded — exiting.");
-    return;
-  }
-  const html = read(relPath);
-  const curriculum = JSON.parse(read("curriculum.json"));
+  const curriculum = await fetchCourse(COURSE_ID);
+
+  const delivered = (curriculum.progress && curriculum.progress.delivered) || [];
+  const latest = delivered[delivered.length - 1];
+  if (!latest) { console.log("No delivered lesson to email."); process.exit(0); }
+
+  const link = `${process.env.APP_BASE_URL.replace(/\/+$/, "")}/c/${COURSE_ID}/${latest.lessonFile}`;
 
   const from = process.env.MAIL_FROM;
   const to = curriculum.settings.email || process.env.MAIL_TO || from;
@@ -41,42 +33,20 @@ async function main() {
     auth: { user: from, pass },
   });
 
-  const lesson = curriculum.progress.delivered.at(-1) || {};
-  const subjectLine = `mySensei · ${curriculum.subject} · lesson ${lesson.module ?? ""}`.trim();
-
-  const base = (process.env.LESSONS_BASE_URL || "").replace(/\/+$/, "");
-  if (base) {
-    // Hosted-link delivery (lesson is published to Cloudflare Pages).
-    const url = `${base}/${path.basename(relPath)}`;
-    await transport.sendMail({
-      from,
-      to,
-      subject: subjectLine,
-      text:
-        `Your next mySensei lesson on "${curriculum.subject}":\n\n${url}\n\n` +
-        `Open it in any browser, read it, and take the quiz at the bottom.\n`,
-      html:
-        `<p>Your next mySensei lesson on "<b>${curriculum.subject}</b>":</p>` +
-        `<p><a href="${url}">${url}</a></p>` +
-        `<p>Open it in any browser, read it, and take the quiz at the bottom.</p>`,
-    });
-    console.log(`Sent link ${url} to ${to}`);
-    return;
-  }
-
-  // Fallback: attach the self-contained file.
+  const subjectLine = `mySensei — your next lesson`;
   await transport.sendMail({
     from,
     to,
     subject: subjectLine,
     text:
-      `Your next mySensei lesson on "${curriculum.subject}" is attached.\n` +
-      `Open the attached file in any browser, read it, and take the quiz at the bottom.\n`,
-    attachments: [
-      { filename: path.basename(relPath), content: html, contentType: "text/html; charset=utf-8" },
-    ],
+      `Your next mySensei lesson on "${curriculum.subject}":\n\n${link}\n\n` +
+      `Open it in any browser, read it, and take the quiz at the bottom.\n`,
+    html:
+      `<p>Your next mySensei lesson on "<b>${curriculum.subject}</b>":</p>` +
+      `<p><a href="${link}">${link}</a></p>` +
+      `<p>Open it in any browser, read it, and take the quiz at the bottom.</p>`,
   });
-  console.log(`Sent ${relPath} to ${to}`);
+  console.log(`Sent lesson link ${link} to ${to}`);
 }
 
 main().catch((err) => {

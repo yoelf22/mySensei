@@ -1,26 +1,25 @@
-// Render the approved syllabus as a standalone HTML document and email it —
-// a course overview the learner receives once, separate from daily lessons.
-// Also writes syllabus.html at the repo root for history.
+// Render the approved syllabus as a standalone HTML document and email a link to it.
+// Stores the page in D1 via the Worker API and emails a Worker page link.
 //
-// Env: GMAIL_APP_PASSWORD (required), MAIL_FROM (required), MAIL_TO (defaults to MAIL_FROM).
+// Env: GMAIL_APP_PASSWORD (required), MAIL_FROM (required), COURSE_ID (required),
+//      APP_BASE_URL (required), INTERNAL_TOKEN (required),
+//      MAIL_TO (defaults to course email), MYSENSEI_RENDER_ONLY (optional).
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
 import { renderSyllabusHtml } from "../lib/render-syllabus.mjs";
+import { fetchCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const COURSE_ID = process.env.COURSE_ID;
+if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
 
 async function main() {
-  const curriculum = JSON.parse(fs.readFileSync(path.join(ROOT, "curriculum.json"), "utf8"));
-  const html = renderSyllabusHtml({ curriculum, webhookUrl: process.env.QUIZ_WEBHOOK_URL || "" });
-  // Publish into lessons/ so the Pages deploy serves it at a one-click URL.
-  fs.mkdirSync(path.join(ROOT, "lessons"), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, "lessons", "course-syllabus.html"), html);
+  const curriculum = await fetchCourse(COURSE_ID);
+  const html = renderSyllabusHtml({ curriculum, webhookUrl: submitUrl(), courseId: COURSE_ID });
+
+  await savePage(COURSE_ID, "syllabus", html);
 
   if (process.env.MYSENSEI_RENDER_ONLY === "1") {
-    console.log("Rendered lessons/course-syllabus.html (render-only).");
+    console.log("Rendered and saved syllabus page (render-only).");
     return;
   }
 
@@ -37,33 +36,14 @@ async function main() {
     auth: { user: from, pass },
   });
 
-  const subject = `mySensei · ${curriculum.subject} · course syllabus`;
-  const base = (process.env.LESSONS_BASE_URL || "").replace(/\/+$/, "");
-
-  if (base) {
-    const url = `${base}/course-syllabus.html`;
-    await transport.sendMail({
-      from,
-      to,
-      subject,
-      text: `Here's the syllabus for your mySensei course on "${curriculum.subject}":\n\n${url}\n\nLessons begin on your schedule.\n`,
-      html: `<p>Here's the syllabus for your mySensei course on "<b>${curriculum.subject}</b>":</p><p><a href="${url}">${url}</a></p><p>Lessons begin on your schedule.</p>`,
-    });
-    console.log(`Sent syllabus link ${url} to ${to}`);
-    return;
-  }
-
-  // Fallback: attach the file.
+  const link = `${process.env.APP_BASE_URL.replace(/\/+$/, "")}/c/${COURSE_ID}/syllabus`;
   await transport.sendMail({
-    from,
-    to,
-    subject,
-    text: `Here's the syllabus for your mySensei course on "${curriculum.subject}". Open the attached file in any browser.\n`,
-    attachments: [
-      { filename: "course-syllabus.html", content: html, contentType: "text/html; charset=utf-8" },
-    ],
+    from, to,
+    subject: "mySensei — your course plan is ready",
+    text: `Your course plan is ready. Review and approve it here:\n\n${link}\n`,
+    html: `<p>Your course plan is ready. Review and approve it here:</p><p><a href="${link}">${link}</a></p>`,
   });
-  console.log(`Sent the syllabus (attachment) to ${to}`);
+  console.log(`Sent syllabus link ${link} to ${to}`);
 }
 
 main().catch((err) => {

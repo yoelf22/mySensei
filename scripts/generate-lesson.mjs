@@ -81,6 +81,18 @@ const LESSON_SCHEMA = {
         required: ["heading", "paragraphs", "bullets"],
       },
     },
+    drills: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          prompt: { type: "string" },
+          solution: { type: "string" },
+        },
+        required: ["prompt", "solution"],
+      },
+    },
     takeaways: { type: "array", items: { type: "string" } },
     media: {
       type: "object",
@@ -109,7 +121,7 @@ const LESSON_SCHEMA = {
       },
     },
   },
-  required: ["title", "intro", "keyIdea", "sections", "takeaways", "media", "quiz"],
+  required: ["title", "intro", "keyIdea", "sections", "drills", "takeaways", "media", "quiz"],
 };
 
 async function authorLesson(client, curriculum, module, attempt, researchNotes) {
@@ -127,10 +139,17 @@ async function authorLesson(client, curriculum, module, attempt, researchNotes) 
     `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n` +
     `Register: ${registerDirective(s.educationLevel)}\n${retry}${reinforce}\n` +
     `Use these research notes for grounding and media:\n---\n${researchNotes}\n---\n\n` +
-    `Rules: Everything (title, body, key idea, quiz questions and options) in ${s.language}. ` +
-    `Keep it concrete and well-structured. For media, ONLY use URLs that appear verbatim in the research notes; ` +
-    `if a real image or link URL isn't present, set that field to an empty string. ` +
-    `Write a 3–5 question multiple-choice quiz that genuinely checks understanding; each question 3–4 options; ` +
+    `Rules: Everything (title, body, key idea, drills, quiz questions and options) in ${s.language}. ` +
+    `This is a PRACTICE lesson, not a lecture. Keep the teaching "sections" brief — just enough to set up the work — ` +
+    `and put the weight on "drills": 2–4 concrete, hands-on exercises the learner DOES right now (perform the activity, ` +
+    `not read about it). Each drill has a "prompt" (the exercise to attempt, with any setup, position, data, or worked ` +
+    `example needed to do it inline) and a "solution" (the worked answer or the result they should reach, so they can ` +
+    `self-check). Make drills active and specific to the subject — for a skill, an actual rep to do; for a knowledge ` +
+    `subject, an applied problem to work out — and progress from easy to harder. ` +
+    `For media, ONLY use URLs that appear verbatim in the research notes; if a real image or link URL isn't present, ` +
+    `set that field to an empty string. ` +
+    `Write a 3–5 question multiple-choice quiz that checks whether the learner can DO the skill from the drills ` +
+    `(apply it), not merely recall definitions; each question 3–4 options; ` +
     `correctIndex is the 0-based index of the right option. For each question also include a short "concept" label ` +
     `(the idea it tests, in ${s.language}) and a one-sentence "explanation" of why the correct answer is right (in ${s.language}).`;
 

@@ -6,7 +6,11 @@ button{font:inherit;background:#b4541f;color:#fff;border:0;border-radius:.4rem;p
 input{font:inherit;padding:.6rem;border:1px solid #e7e1d5;border-radius:.4rem;width:100%}
 .c{border:1px solid #e7e1d5;border-radius:.5rem;padding:1rem;margin:1rem 0;font-family:system-ui,sans-serif}
 .muted{color:#6b6457;font-family:system-ui,sans-serif}
-a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:system-ui,sans-serif;font-weight:bold;text-decoration:none}</style></head><body>${body}</body></html>`;
+a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:system-ui,sans-serif;font-weight:bold;text-decoration:none}
+.badge{font-family:system-ui,sans-serif;font-size:.75rem;color:#fff;background:#b4541f;border-radius:.3rem;padding:.05rem .4rem}
+#invite{border-top:1px solid #e7e1d5;margin-top:2rem;padding-top:1rem}
+.allow{list-style:none;padding:0;font-family:system-ui,sans-serif;font-size:.9rem}
+.allow li{padding:.3rem 0}</style></head><body>${body}</body></html>`;
 
 export function loginPage() {
   return SHELL("mySensei — sign in", `<h1>mySensei</h1><p class="muted">Enter your email; we'll send a sign-in link.</p>
@@ -28,6 +32,7 @@ export function verifyPage(token) {
 
 export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
+<div id="invite" style="display:none"></div>
 <script>
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
 function openHref(c){
@@ -35,8 +40,21 @@ function openHref(c){
   if(c.status==="draft")return "/c/"+id+"/onboard";
   if(c.status==="awaiting-assessment")return "/c/"+id+"/assessment";
   if(c.status==="awaiting-approval")return "/c/"+id+"/syllabus";
-  return "/c/"+id; // contents page: syllabus + all classes
+  return "/c/"+id;
 }
+function loadInvite(){
+  var box=document.getElementById("invite"); box.style.display="block";
+  fetch("/api/allowlist").then(function(r){return r.ok?r.json():{emails:[]};}).then(function(d){
+    var rows=(d.emails||[]).map(function(e){return '<li>'+esc(e)+' <button data-rm="'+esc(e)+'">remove</button></li>';}).join("");
+    box.innerHTML='<h2>Invite</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul>';
+  });
+}
+function invite(){
+  var em=document.getElementById("invemail").value, msg=document.getElementById("invmsg");
+  fetch("/api/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})})
+    .then(function(r){msg.textContent=r.ok?("Invited "+em):"Could not invite (check the address).";if(r.ok)loadInvite();});
+}
+function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
@@ -45,12 +63,18 @@ function load(){fetch("/api/courses").then(function(r){if(r.status===401){locati
     var btn="";
     if(c.status==="paused")btn='<button data-act="resume" data-id="'+esc(c.id)+'">Resume</button>';
     if(c.status==="active")btn='<button data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
+    var badge=c.last_error?' <span class="badge">⚠ delayed</span>':'';
     var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
-    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b><div class="muted">'+esc(c.status)+" · level "+esc(c.level||"?")+" · "+prog+'</div><p>'+open+btn+'</p></div>';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p>'+open+btn+'</p></div>';
   }).join("");
+  if(d.isOwner) loadInvite();
 });}
 function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}
 document.getElementById("list").addEventListener("click",function(e){var b=e.target.closest("button[data-act]");if(b)act(b.getAttribute("data-id"),b.getAttribute("data-act"));});
+document.getElementById("invite").addEventListener("click",function(e){
+  if(e.target.id==="invbtn")invite();
+  var rm=e.target.closest("button[data-rm]"); if(rm)rmAllow(rm.getAttribute("data-rm"));
+});
 document.getElementById("new").addEventListener("click",function(){fetch("/api/courses",{method:"POST"}).then(function(r){return r.json();}).then(function(d){location.href="/c/"+d.id+"/onboard";});});
 load();
 </script>`);

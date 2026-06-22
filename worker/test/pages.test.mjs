@@ -35,3 +35,12 @@ it("dashboard cards link to open the course by status", async () => {
   expect(html).toContain("/syllabus");     // awaiting-approval target
   expect(html).toContain('return "/c/"+id;'); // built courses open the contents page
 });
+
+it("dashboard has an owner-gated invite panel and a failure badge", async () => {
+  const html = await (await get("/dashboard")).text();
+  expect(html).toContain("d.isOwner");          // invite UI gated on owner
+  expect(html).toContain("/api/invite");
+  expect(html).toContain("/api/allowlist");
+  expect(html).toContain("c.last_error");        // badge driven by last_error
+  expect(html).toContain("delayed");
+});

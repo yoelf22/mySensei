@@ -61,14 +61,19 @@ async function main() {
 
   const { questions } = await structured(
     c,
-    `Write ${QUESTION_COUNT} multiple-choice placement-check questions in ${ps.language} about "${p.subject}"` +
+    `Write ${QUESTION_COUNT} PRACTICAL, applied placement-check questions in ${ps.language} about "${p.subject}"` +
       `${p.angle ? ` (angle: ${p.angle})` : ""}, ordered EASY → HARD so each probes a higher expertise band. ` +
+      `Make every item a task the learner has to WORK OUT, not trivia: give a concrete scenario, position, worked ` +
+      `example, sample, or short problem — include whatever setup or data is needed right in the question text — and ` +
+      `ask them to apply a technique, predict the result, diagnose what's wrong, or choose the correct next step. ` +
+      `Do NOT ask "what is the definition of X" or recall-a-term questions; each item should only be answerable by ` +
+      `actually doing the reasoning. The options are plausible outcomes of the task (exactly one correct). ` +
       `Tag each with "level" = the difficulty band 1–10 it targets (ascending across the set, spanning low to 10). ` +
-      `Each question has 3–4 options and a 0-based correctIndex. Make the hard ones genuinely discriminating for an expert. ` +
+      `Each question has 3–4 options and a 0-based correctIndex. Make the hard ones require genuine expert reasoning to solve. ` +
       `${registerDirective(ps.educationLevel)} ` +
       `Ground them in these research notes:\n---\n${notes}\n---`,
     QUESTION_SCHEMA,
-    4000,
+    6000,
   );
 
   const html = renderAssessmentHtml({

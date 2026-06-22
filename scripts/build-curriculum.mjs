@@ -5,7 +5,7 @@
 // Env: ASSESSMENT_RESULTS (JSON [{level, correct}]), ANTHROPIC_API_KEY, COURSE_ID
 
 import { client, structured } from "../lib/claude.mjs";
-import { buildLadder } from "../lib/ladder.mjs";
+import { buildLadder, placementLevel } from "../lib/ladder.mjs";
 import { registerDirective } from "../lib/register.mjs";
 import { fetchCourse, saveCourse } from "./lib/course-store.mjs";
 
@@ -41,7 +41,9 @@ async function main() {
     },
     800,
   );
-  const level = Math.min(10, Math.max(1, judged.level));
+  // Placement places, never graduates: cap at 9 so even a perfect score leaves a
+  // real band to teach (and reach 10 by passing its checkpoint), not the mastery page.
+  const level = placementLevel(judged.level);
 
   // 2. Build the outline sized to the chunk-size ladder.
   const ladder = buildLadder(level, curriculum.settings.chunkMinutes);

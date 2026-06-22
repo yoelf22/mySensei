@@ -1,10 +1,10 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
-import { sendMagicLink } from "./email.mjs";
+import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch } from "./dispatch.mjs";
 import { loginPage, dashboardPage, verifyPage } from "./pages.mjs";
@@ -22,6 +22,10 @@ const CORS = {
 async function sessionEmail(request, env) {
   const tok = getCookie(request, "session");
   return tok ? verifySession(tok, env.SESSION_SECRET) : null;
+}
+
+function isOwner(email, env) {
+  return !!email && email.toLowerCase() === String(env.OWNER_EMAIL || "").toLowerCase();
 }
 
 export default {
@@ -63,7 +67,7 @@ export default {
     if (pathname === "/api/courses") {
       const email = await sessionEmail(request, env);
       if (!email) return json({ error: "unauthorized" }, 401);
-      if (method === "GET") return json({ courses: await listCourses(env, email) });
+      if (method === "GET") return json({ courses: await listCourses(env, email), isOwner: isOwner(email, env) });
       if (method === "POST") return json(await createCourse(env, email));
       return json({ error: "method not allowed" }, 405);
     }
@@ -77,6 +81,37 @@ export default {
       if (m[2] === "pause") { await setStatus(env, course.id, "paused"); return json({ ok: true }); }
       if ((await countActive(env, email)) >= 3) return json({ error: "cap" }, 409);
       await setStatus(env, course.id, "active");
+      return json({ ok: true });
+    }
+
+    if (pathname === "/api/invite" && method === "POST") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
+      let body; try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400); }
+      const invitee = String(body.email || "").trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(invitee)) return json({ error: "invalid email" }, 400);
+      await addToAllowlist(env, invitee);
+      await sendInvite(env, invitee);
+      return json({ ok: true, email: invitee });
+    }
+
+    if (pathname === "/api/allowlist") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
+      if (method === "GET") return json({ emails: await listAllowlist(env) });
+      return json({ error: "method not allowed" }, 405);
+    }
+
+    if (pathname === "/api/allowlist/remove" && method === "POST") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
+      let body; try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400); }
+      const target = String(body.email || "").trim().toLowerCase();
+      if (target === String(env.OWNER_EMAIL || "").toLowerCase()) return json({ error: "cannot remove owner" }, 400);
+      await removeFromAllowlist(env, target);
       return json({ ok: true });
     }
 

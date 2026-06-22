@@ -14,6 +14,7 @@ the plan and the progress, so the unattended job always knows what to send next.
 | `level` | **Live** mastery, 1–10. Starts at `startLevel` and climbs as quizzes are passed. Reaching `10` ends the track and triggers specialization. |
 | `settings.language` | Display name of the course language, e.g. `"Hebrew"`. Everything the learner reads is generated in this language. |
 | `settings.languageCode` | BCP-47 code, e.g. `"he"`, `"es"`. Used for the page's `lang` attribute and to pick text direction. |
+| `settings.educationLevel` | Reader register: `"middle-school"`, `"high-school"`, `"undergraduate"` (default), or `"graduate"`. Sets the prose/jargon level of the placement check, syllabus, and lessons — independent of the 1–10 skill depth. |
 | `settings.chunkMinutes` | Target lesson length: `5`, `10`, or `30`. |
 | `settings.cadence` | `daily` or `weekly`. |
 | `settings.deliveryTime` | Local send time, `"HH:MM"` 24h. |

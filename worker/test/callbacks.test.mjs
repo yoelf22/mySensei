@@ -19,3 +19,26 @@ it("quiz submit dispatches quiz-result with courseId + missed", async () => {
   expect(body.client_payload.courseId).toBe("abc");
   expect(body.client_payload.missed).toEqual(["x"]);
 });
+
+it("onboard submit carries educationLevel through the dispatch", async () => {
+  const ctx = createExecutionContext();
+  await worker.fetch(new Request("https://app/submit", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "onboard", courseId: "abc", subject: "Art", educationLevel: "graduate" }),
+  }), E, ctx);
+  await waitOnExecutionContext(ctx);
+  const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+  expect(body.event_type).toBe("onboard");
+  expect(body.client_payload.educationLevel).toBe("graduate");
+});
+
+it("onboard defaults educationLevel to undergraduate when absent", async () => {
+  const ctx = createExecutionContext();
+  await worker.fetch(new Request("https://app/submit", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "onboard", courseId: "abc", subject: "Art" }),
+  }), E, ctx);
+  await waitOnExecutionContext(ctx);
+  const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+  expect(body.client_payload.educationLevel).toBe("undergraduate");
+});

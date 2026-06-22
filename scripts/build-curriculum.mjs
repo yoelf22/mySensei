@@ -6,6 +6,7 @@
 
 import { client, structured } from "../lib/claude.mjs";
 import { buildLadder } from "../lib/ladder.mjs";
+import { registerDirective } from "../lib/register.mjs";
 import { fetchCourse, saveCourse } from "./lib/course-store.mjs";
 
 const COURSE_ID = process.env.COURSE_ID;
@@ -49,6 +50,7 @@ async function main() {
     `Build a ${ladder.length}-module course outline in ${curriculum.settings.language} for "${curriculum.subject}"` +
       `${curriculum.angle ? ` (angle: ${curriculum.angle})` : ""}, pitched at learner level ${level}/10. ` +
       `Each module is { title, summary } (summary one line). Order them so they deepen toward mastery. ` +
+      `${registerDirective(curriculum.settings.educationLevel)} ` +
       `Ground them in these notes:\n---\n${curriculum.researchContext || ""}\n---`,
     {
       type: "object",
@@ -86,6 +88,7 @@ async function main() {
       `the learner will meet and lay out the course narrative — how the modules build from here toward mastery. ` +
       `"bibliography" is 5–8 real, well-known sources (books or major essays) on the subject, each { title, author, note } ` +
       `with a one-line note on what it offers; use genuine works and do not invent citations. ` +
+      `${registerDirective(curriculum.settings.educationLevel)} ` +
       `Ground it in this module outline: ${JSON.stringify(outline.map((m) => m.title))} and these notes:\n---\n${curriculum.researchContext || ""}\n---`,
     {
       type: "object",

@@ -8,6 +8,7 @@
 import { client, research, structured } from "../lib/claude.mjs";
 import { renderAssessmentHtml } from "../lib/render-assessment.mjs";
 import { fetchCourse, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
+import { registerDirective } from "../lib/register.mjs";
 
 const COURSE_ID = process.env.COURSE_ID;
 if (!COURSE_ID) { console.error("COURSE_ID is required"); process.exit(1); }
@@ -63,6 +64,7 @@ async function main() {
       `${p.angle ? ` (angle: ${p.angle})` : ""}, ordered EASY → HARD so each probes a higher expertise band. ` +
       `Tag each with "level" = the difficulty band 1–10 it targets (ascending across the set, spanning low to 10). ` +
       `Each question has 3–4 options and a 0-based correctIndex. Make the hard ones genuinely discriminating for an expert. ` +
+      `${registerDirective(p.educationLevel)} ` +
       `Ground them in these research notes:\n---\n${notes}\n---`,
     QUESTION_SCHEMA,
     4000,
@@ -84,6 +86,7 @@ async function main() {
     settings: {
       language: p.language || "English",
       languageCode: p.languageCode || "en",
+      educationLevel: p.educationLevel || "undergraduate",
       chunkMinutes: Number(p.chunkMinutes) || 10,
       cadence: p.cadence === "weekly" ? "weekly" : "daily",
       deliveryTime: p.deliveryTime || "07:00",

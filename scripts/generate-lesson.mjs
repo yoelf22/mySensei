@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { fetchCourse, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 import { nextTarget, needsMoreModules, atMastery, alreadyDelivered } from "../lib/progress.mjs";
 import { shouldSendNow } from "../lib/schedule.mjs";
+import { registerDirective } from "../lib/register.mjs";
 import { renderLessonHtml } from "../lib/render-lesson.mjs";
 
 const MODEL = process.env.MYSENSEI_MODEL || "claude-sonnet-4-6";
@@ -123,10 +124,11 @@ async function authorLesson(client, curriculum, module, attempt, researchNotes) 
   const prompt =
     `Write a ${s.chunkMinutes}-minute micro-lesson entirely in ${s.language}.\n` +
     `Subject: ${curriculum.subject}\nModule: ${module.title} — ${module.summary || ""}\n` +
-    `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n${retry}${reinforce}\n` +
+    `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n` +
+    `Register: ${registerDirective(s.educationLevel)}\n${retry}${reinforce}\n` +
     `Use these research notes for grounding and media:\n---\n${researchNotes}\n---\n\n` +
     `Rules: Everything (title, body, key idea, quiz questions and options) in ${s.language}. ` +
-    `Keep it light and concrete. For media, ONLY use URLs that appear verbatim in the research notes; ` +
+    `Keep it concrete and well-structured. For media, ONLY use URLs that appear verbatim in the research notes; ` +
     `if a real image or link URL isn't present, set that field to an empty string. ` +
     `Write a 3–5 question multiple-choice quiz that genuinely checks understanding; each question 3–4 options; ` +
     `correctIndex is the 0-based index of the right option. For each question also include a short "concept" label ` +

@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -97,6 +97,26 @@ describe("listActiveCourses", () => {
     expect(ids).toContain(a.id);
     expect(ids).not.toContain(b.id);
     expect(active.find((c) => c.id === a.id).settings.cadence).toBe("daily");
+  });
+});
+
+describe("allowlist management", () => {
+  it("add (case-insensitive, idempotent), list, remove", async () => {
+    await addToAllowlist(env, "A@X.com");
+    await addToAllowlist(env, "a@x.com"); // same lowercased — idempotent
+    expect(await listAllowlist(env)).toContain("a@x.com");
+    await removeFromAllowlist(env, "A@X.COM");
+    expect(await listAllowlist(env)).not.toContain("a@x.com");
+  });
+});
+
+describe("last_error", () => {
+  it("setLastError sets it; saveCurriculum clears it on the next save", async () => {
+    const { id } = await createCourse(env, "me@x.com");
+    await setLastError(env, id, "boom");
+    expect((await getCourse(env, id)).last_error).toBe("boom");
+    await saveCurriculum(env, id, { progress: { status: "active" } });
+    expect((await getCourse(env, id)).last_error).toBe(null);
   });
 });
 

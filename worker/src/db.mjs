@@ -22,6 +22,20 @@ export async function isAllowlisted(env, email) {
   return !!row;
 }
 
+export async function addToAllowlist(env, email) {
+  await env.DB.prepare("INSERT OR IGNORE INTO allowlist(email, added_at) VALUES(?, ?)").bind(norm(email), now()).run();
+}
+export async function listAllowlist(env) {
+  const { results } = await env.DB.prepare("SELECT email FROM allowlist ORDER BY added_at").all();
+  return results.map((r) => r.email);
+}
+export async function removeFromAllowlist(env, email) {
+  await env.DB.prepare("DELETE FROM allowlist WHERE email = ?").bind(norm(email)).run();
+}
+export async function setLastError(env, id, msg) {
+  await env.DB.prepare("UPDATE courses SET last_error = ?, updated_at = ? WHERE id = ?").bind(msg || null, now(), id).run();
+}
+
 export async function createCourse(env, ownerEmail) {
   const id = randomId();
   const t = now();
@@ -91,7 +105,7 @@ export async function saveCurriculum(env, id, c) {
   const status = (c.progress && c.progress.status) || "draft";
   await env.DB.prepare(
     `UPDATE courses SET subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
-       research=?, assessment=?, outline=?, progress=?, syllabus=?, updated_at=? WHERE id=?`,
+       research=?, assessment=?, outline=?, progress=?, syllabus=?, last_error=NULL, updated_at=? WHERE id=?`,
   ).bind(
     c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
     c.startLevel ?? null, c.level ?? null, c.researchContext || "",

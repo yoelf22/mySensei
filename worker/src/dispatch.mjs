@@ -6,7 +6,9 @@ export function buildDispatch(body) {
 
   if (type === "onboard") {
     if (!body.subject) return { error: "missing subject" };
-    return { event_type: "onboard", client_payload: { courseId, subject: body.subject, angle: body.angle || "", language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", chunkMinutes: Number(body.chunkMinutes) || 10, cadence: body.cadence === "weekly" ? "weekly" : "daily", deliveryTime: body.deliveryTime || "07:00", timezone: body.timezone || "UTC", workweekDays: Array.isArray(body.workweekDays) ? body.workweekDays : [0,1,2,3,4,5,6] } };
+    // GitHub caps client_payload at 10 top-level properties, so the course
+    // settings are nested under one `settings` key (keeps it to 4 top-level).
+    return { event_type: "onboard", client_payload: { courseId, subject: body.subject, angle: body.angle || "", settings: { language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", chunkMinutes: Number(body.chunkMinutes) || 10, cadence: body.cadence === "weekly" ? "weekly" : "daily", deliveryTime: body.deliveryTime || "07:00", timezone: body.timezone || "UTC", workweekDays: Array.isArray(body.workweekDays) ? body.workweekDays : [0,1,2,3,4,5,6] } } };
   }
   if (type === "assessment") {
     if (!Array.isArray(body.results) || !body.results.length) return { error: "missing results" };

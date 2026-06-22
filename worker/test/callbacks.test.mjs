@@ -20,7 +20,7 @@ it("quiz submit dispatches quiz-result with courseId + missed", async () => {
   expect(body.client_payload.missed).toEqual(["x"]);
 });
 
-it("onboard submit carries educationLevel through the dispatch", async () => {
+it("onboard nests settings (incl. educationLevel) and stays within GitHub's 10-property client_payload cap", async () => {
   const ctx = createExecutionContext();
   await worker.fetch(new Request("https://app/submit", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -29,7 +29,9 @@ it("onboard submit carries educationLevel through the dispatch", async () => {
   await waitOnExecutionContext(ctx);
   const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
   expect(body.event_type).toBe("onboard");
-  expect(body.client_payload.educationLevel).toBe("graduate");
+  expect(body.client_payload.settings.educationLevel).toBe("graduate");
+  // GitHub rejects (422) a client_payload with more than 10 top-level properties.
+  expect(Object.keys(body.client_payload).length).toBeLessThanOrEqual(10);
 });
 
 it("onboard defaults educationLevel to undergraduate when absent", async () => {
@@ -40,5 +42,5 @@ it("onboard defaults educationLevel to undergraduate when absent", async () => {
   }), E, ctx);
   await waitOnExecutionContext(ctx);
   const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
-  expect(body.client_payload.educationLevel).toBe("undergraduate");
+  expect(body.client_payload.settings.educationLevel).toBe("undergraduate");
 });

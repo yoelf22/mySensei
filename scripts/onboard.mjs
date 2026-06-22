@@ -46,6 +46,7 @@ async function main() {
     console.error("ONBOARD_PAYLOAD missing subject.");
     process.exit(1);
   }
+  const ps = p.settings || {}; // course settings are nested (GitHub client_payload 10-prop cap)
   const c = client();
 
   // The lesson/placement recipient is the course owner (the logged-in,
@@ -54,17 +55,17 @@ async function main() {
 
   const notes = await research(
     c,
-    `Research "${p.subject}"${p.angle ? ` with this angle: ${p.angle}` : ""}, for a course in ${p.language}. ` +
+    `Research "${p.subject}"${p.angle ? ` with this angle: ${p.angle}` : ""}, for a course in ${ps.language}. ` +
       `Summarize the area's sub-topics and what a beginner vs. an expert focuses on. Keep it tight.`,
   );
 
   const { questions } = await structured(
     c,
-    `Write ${QUESTION_COUNT} multiple-choice placement-check questions in ${p.language} about "${p.subject}"` +
+    `Write ${QUESTION_COUNT} multiple-choice placement-check questions in ${ps.language} about "${p.subject}"` +
       `${p.angle ? ` (angle: ${p.angle})` : ""}, ordered EASY → HARD so each probes a higher expertise band. ` +
       `Tag each with "level" = the difficulty band 1–10 it targets (ascending across the set, spanning low to 10). ` +
       `Each question has 3–4 options and a 0-based correctIndex. Make the hard ones genuinely discriminating for an expert. ` +
-      `${registerDirective(p.educationLevel)} ` +
+      `${registerDirective(ps.educationLevel)} ` +
       `Ground them in these research notes:\n---\n${notes}\n---`,
     QUESTION_SCHEMA,
     4000,
@@ -74,7 +75,7 @@ async function main() {
     questions,
     webhookUrl: submitUrl(),
     courseId: COURSE_ID,
-    languageCode: p.languageCode || "en",
+    languageCode: ps.languageCode || "en",
     subject: p.subject,
   });
   await savePage(COURSE_ID, "assessment", html);
@@ -84,14 +85,7 @@ async function main() {
     subject: p.subject,
     angle: p.angle || "",
     settings: {
-      language: p.language || "English",
-      languageCode: p.languageCode || "en",
-      educationLevel: p.educationLevel || "undergraduate",
-      chunkMinutes: Number(p.chunkMinutes) || 10,
-      cadence: p.cadence === "weekly" ? "weekly" : "daily",
-      deliveryTime: p.deliveryTime || "07:00",
-      timezone: p.timezone || "UTC",
-      workweekDays: Array.isArray(p.workweekDays) ? p.workweekDays : [0, 1, 2, 3, 4, 5, 6],
+      ...ps,
       email: existing.ownerEmail || process.env.MAIL_TO || "",
       model: process.env.MYSENSEI_MODEL || "claude-sonnet-4-6",
       passThreshold: 0.7,

@@ -33,3 +33,14 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_FROM: ${{ vars.MAIL_FROM }}
         run: npm run send
+
+      - name: Report failure to owner
+        if: failure()
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: node scripts/report-failure.mjs

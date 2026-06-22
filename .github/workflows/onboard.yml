@@ -42,3 +42,14 @@ jobs:
           EMAIL_INTRO: "Here's a short placement check. Answer the questions and I'll judge your level, build your course, and email your syllabus."
           EMAIL_URL: ${{ vars.APP_BASE_URL }}/c/${{ github.event.client_payload.courseId }}/assessment
         run: node scripts/email-link.mjs
+
+      - name: Report failure to owner
+        if: failure()
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: node scripts/report-failure.mjs

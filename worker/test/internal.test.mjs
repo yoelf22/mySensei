@@ -1,7 +1,7 @@
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
 import worker from "../src/worker.mjs";
-import { createCourse } from "../src/db.mjs";
+import { createCourse, getCourse } from "../src/db.mjs";
 
 const TOKEN = "tok-123";
 const E = { ...env, INTERNAL_TOKEN: TOKEN };
@@ -47,5 +47,16 @@ describe("internal API", () => {
       method: "PUT", headers: auth, body: JSON.stringify({ path: "assessment", html: "<h1>hi</h1>" }),
     });
     expect(page.status).toBe(200);
+  });
+
+  it("PUT /internal/course/:id/error sets last_error", async () => {
+    const { id } = await createCourse(env, "me@x.com");
+    const res = await call(`/internal/course/${id}/error`, { method: "PUT", headers: auth, body: JSON.stringify({ error: "boom" }) });
+    expect(res.status).toBe(200);
+    expect((await getCourse(env, id)).last_error).toBe("boom");
+  });
+  it("rejects /error without the bearer token", async () => {
+    const { id } = await createCourse(env, "me@x.com");
+    expect((await call(`/internal/course/${id}/error`, { method: "PUT", body: "{}" })).status).toBe(401);
   });
 });

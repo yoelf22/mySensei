@@ -38,6 +38,18 @@ export async function savePage(courseId, path, html) {
   if (!r.ok) throw new Error(`savePage ${courseId}/${path}: ${r.status}`);
 }
 
+export async function reportError(courseId, msg) {
+  try {
+    await fetch(`${base()}/internal/course/${courseId}/error`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: String(msg || "") }),
+    });
+  } catch (e) {
+    console.error("reportError failed:", e.message);
+  }
+}
+
 export function submitUrl() {
   return `${base()}/submit`;
 }

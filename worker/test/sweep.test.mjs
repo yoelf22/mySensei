@@ -47,4 +47,17 @@ describe("runSweep + scheduled", () => {
     await waitOnExecutionContext(ctx);
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
+
+  it("runSweep still resolves and logs when a dispatch fails", async () => {
+    const due = await createCourse(env, "me@x.com");
+    await saveCurriculum(env, due.id, { settings: dailyAt(12), progress: { status: "active" } });
+    globalThis.fetch = vi.fn(async () => new Response("nope", { status: 500 }));
+    const errs = [];
+    const orig = console.error; console.error = (...a) => errs.push(a.join(" "));
+    try {
+      const res = await runSweep(E, NOON_UTC); // must not throw
+      expect(res.dispatched).toContain(due.id);
+      expect(errs.some((e) => e.includes(due.id))).toBe(true);
+    } finally { console.error = orig; }
+  });
 });

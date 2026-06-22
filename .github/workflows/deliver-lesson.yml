@@ -2,6 +2,9 @@ name: deliver-lesson
 on:
   repository_dispatch:
     types: [lesson-due]
+concurrency:
+  group: deliver-${{ github.event.client_payload.courseId }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:

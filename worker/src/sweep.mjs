@@ -24,6 +24,9 @@ async function fireDispatch(env, courseId) {
 export async function runSweep(env, now) {
   const courses = await listActiveCourses(env);
   const due = dueCourseIds(courses, now);
-  await Promise.allSettled(due.map((id) => fireDispatch(env, id)));
+  const results = await Promise.allSettled(due.map((id) => fireDispatch(env, id)));
+  results.forEach((r, i) => {
+    if (r.status === "rejected") console.error(`sweep dispatch failed for ${due[i]}:`, r.reason && r.reason.message);
+  });
   return { dispatched: due };
 }

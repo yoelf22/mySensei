@@ -57,6 +57,7 @@ function invite(){
 function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
+  if(d.isOwner) loadInvite();
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
   el.innerHTML=d.courses.map(function(c){
     var prog=c.progress?("module "+esc(c.progress.currentModule)):"";
@@ -67,7 +68,6 @@ function load(){fetch("/api/courses").then(function(r){if(r.status===401){locati
     var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
     return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p>'+open+btn+'</p></div>';
   }).join("");
-  if(d.isOwner) loadInvite();
 });}
 function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}
 document.getElementById("list").addEventListener("click",function(e){var b=e.target.closest("button[data-act]");if(b)act(b.getAttribute("data-id"),b.getAttribute("data-act"));});

@@ -1,12 +1,12 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
 import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
 import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
-import { buildDispatch } from "./dispatch.mjs";
+import { buildDispatch, buildDisputeRecord, postDispatch } from "./dispatch.mjs";
 import { loginPage, dashboardPage, verifyPage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
@@ -118,6 +118,15 @@ export default {
     if (method === "POST" && pathname === "/submit") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400, CORS); }
+      if (body.type === "dispute") {
+        const rec = buildDisputeRecord(body);
+        if (rec.error) return json({ error: rec.error }, 400, CORS);
+        const { id, duplicate } = await createDispute(env, rec);
+        if (duplicate) return json({ ok: true, duplicate: true }, 200, CORS);
+        const gh2 = await postDispatch(env, "dispute", { courseId: rec.courseId, disputeId: id });
+        if (!gh2.ok) return json({ error: "dispatch failed", status: gh2.status }, 502, CORS);
+        return json({ ok: true }, 200, CORS);
+      }
       const d = buildDispatch(body);
       if (d.error) return json({ error: d.error }, 400, CORS);
       const gh = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/dispatches`, {

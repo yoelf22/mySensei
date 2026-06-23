@@ -34,3 +34,64 @@ describe("disputes db", () => {
     expect(await getDispute(env, "nope")).toBe(null);
   });
 });
+
+import worker from "../src/worker.mjs";
+import { buildDisputeRecord } from "../src/dispatch.mjs";
+import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
+
+describe("buildDisputeRecord", () => {
+  const ok = { type: "dispute", courseId: "c1", module: 1, attempt: 1, questionIndex: 0, question: "Q", options: ["a", "b"], correctIndex: 1, chosenIndex: 0, concept: "c", explanation: "e", reason: "a works" };
+  it("accepts a well-formed dispute", () => {
+    const r = buildDisputeRecord(ok);
+    expect(r.error).toBeUndefined();
+    expect(r.payload.reason).toBe("a works");
+    expect(r.questionIndex).toBe(0);
+  });
+  it("rejects a missing reason", () => {
+    expect(buildDisputeRecord({ ...ok, reason: "  " }).error).toBeTruthy();
+  });
+  it("rejects a missing courseId", () => {
+    expect(buildDisputeRecord({ ...ok, courseId: "" }).error).toBeTruthy();
+  });
+  it("rejects a non-integer questionIndex", () => {
+    expect(buildDisputeRecord({ ...ok, questionIndex: "x" }).error).toBeTruthy();
+  });
+});
+
+describe("/submit dispute branch", () => {
+  const E = { ...env, GITHUB_OWNER: "o", GITHUB_REPO: "r", GITHUB_TOKEN: "t" };
+  const body = { type: "dispute", courseId: "c1", module: 1, attempt: 1, questionIndex: 0, question: "Q", options: ["a", "b"], correctIndex: 1, chosenIndex: 0, concept: "c", explanation: "e", reason: "a works too" };
+  async function submit(env2, b) {
+    const ctx = createExecutionContext();
+    const res = await worker.fetch(new Request("https://app/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }), env2, ctx);
+    await waitOnExecutionContext(ctx);
+    return res;
+  }
+
+  it("stores the dispute and reports a duplicate on the second submit", async () => {
+    await env.DB.exec("DELETE FROM disputes;");
+    // Stub the GitHub dispatch so no real network call happens.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response("{}", { status: 200 });
+    try {
+      const r1 = await submit(E, body);
+      expect(r1.status).toBe(200);
+      const j1 = await r1.json();
+      expect(j1.ok).toBe(true);
+      expect(j1.duplicate).toBeFalsy();
+
+      const r2 = await submit(E, body);
+      const j2 = await r2.json();
+      expect(j2.duplicate).toBe(true);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+    const { results } = await env.DB.prepare("SELECT id FROM disputes WHERE course_id='c1'").all();
+    expect(results.length).toBe(1);
+  });
+
+  it("rejects an invalid dispute with 400", async () => {
+    const r = await submit(E, { ...body, reason: "" });
+    expect(r.status).toBe(400);
+  });
+});

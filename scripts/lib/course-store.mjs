@@ -53,3 +53,20 @@ export async function reportError(courseId, msg) {
 export function submitUrl() {
   return `${base()}/submit`;
 }
+
+export async function fetchDispute(disputeId) {
+  const r = await fetch(`${base()}/internal/dispute/${disputeId}`, {
+    headers: { Authorization: `Bearer ${token()}` },
+  });
+  if (!r.ok) throw new Error(`fetchDispute ${disputeId}: ${r.status}`);
+  return r.json();
+}
+
+export async function resolveDispute(disputeId, { status, ruling }) {
+  const r = await fetch(`${base()}/internal/dispute/${disputeId}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status, ruling }),
+  });
+  if (!r.ok) throw new Error(`resolveDispute ${disputeId}: ${r.status}`);
+}

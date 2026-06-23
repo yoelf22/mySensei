@@ -8,6 +8,7 @@
     "generate": "node scripts/generate-lesson.mjs",
     "send": "node scripts/send-email.mjs",
     "record": "node scripts/record-quiz.mjs",
+    "adjudicate": "node scripts/adjudicate-dispute.mjs",
     "test": "node --test"
   },
   "dependencies": {

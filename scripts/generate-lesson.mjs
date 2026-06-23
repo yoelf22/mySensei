@@ -12,6 +12,7 @@ import { nextTarget, needsMoreModules, atMastery, alreadyDelivered } from "../li
 import { shouldSendNow } from "../lib/schedule.mjs";
 import { registerDirective } from "../lib/register.mjs";
 import { renderLessonHtml } from "../lib/render-lesson.mjs";
+import { pitfallsDirective } from "../lib/dispute.mjs";
 
 const MODEL = process.env.MYSENSEI_MODEL || "claude-sonnet-4-6";
 const COURSE_ID = process.env.COURSE_ID;
@@ -133,11 +134,12 @@ async function authorLesson(client, curriculum, module, attempt, researchNotes) 
   const reinforce = missed.length
     ? `The learner recently got these points wrong — weave a brief reinforcement of them into this lesson where it fits naturally: ${missed.join("; ")}.\n`
     : "";
+  const pitfalls = pitfallsDirective(curriculum);
   const prompt =
     `Write a ${s.chunkMinutes}-minute micro-lesson entirely in ${s.language}.\n` +
     `Subject: ${curriculum.subject}\nModule: ${module.title} — ${module.summary || ""}\n` +
     `Angle: ${curriculum.angle}\nLearner level: ${curriculum.level}/10 (pitch the depth here).\n` +
-    `Register: ${registerDirective(s.educationLevel)}\n${retry}${reinforce}\n` +
+    `Register: ${registerDirective(s.educationLevel)}\n${retry}${reinforce}${pitfalls}\n` +
     `Use these research notes for grounding and media:\n---\n${researchNotes}\n---\n\n` +
     `Rules: Everything (title, body, key idea, drills, quiz questions and options) in ${s.language}. ` +
     `This is a PRACTICE lesson, not a lecture. Keep the teaching "sections" brief — just enough to set up the work — ` +

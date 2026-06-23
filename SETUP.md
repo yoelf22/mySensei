@@ -95,6 +95,15 @@ stays private). One-time:
 
 The cadence workflow then publishes each lesson to Pages before emailing the link.
 
+## 4c. Disputes
+
+- **Disputes:** apply the new D1 migration after pulling this change —
+  `cd worker && npx wrangler d1 migrations apply <DB_NAME> --remote` — then
+  redeploy the worker (`npm run deploy`). The `dispute` workflow needs the same
+  secrets/vars the other workflows already use (`ANTHROPIC_API_KEY`,
+  `INTERNAL_TOKEN`, `APP_BASE_URL`, `MAIL_FROM`, `MAIL_TO`, `GMAIL_APP_PASSWORD`,
+  `OWNER_EMAIL`) — no new ones.
+
 ## 5. Send the first lesson
 
 GitHub Actions → **cadence** → **Run workflow** (keep "force" checked) sends one

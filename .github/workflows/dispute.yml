@@ -1,0 +1,40 @@
+name: dispute
+on:
+  repository_dispatch:
+    types: [dispute]
+concurrency:
+  group: dispute-${{ github.event.client_payload.disputeId }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  adjudicate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - name: Adjudicate the dispute
+        env:
+          DISPUTE_ID: ${{ github.event.client_payload.disputeId }}
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          MAIL_TO: ${{ vars.MAIL_TO }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: npm run --silent adjudicate
+
+      - name: Report failure to owner
+        if: failure()
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: node scripts/report-failure.mjs

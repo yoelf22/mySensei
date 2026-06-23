@@ -36,11 +36,14 @@ it("dashboard cards link to open the course by status", async () => {
   expect(html).toContain('return "/c/"+id;'); // built courses open the contents page
 });
 
-it("dashboard has an owner-gated invite panel and a failure badge", async () => {
+it("dashboard shows an invite panel to everyone; the allowlist list stays owner-only", async () => {
   const html = await (await get("/dashboard")).text();
-  expect(html).toContain("d.isOwner");          // invite UI gated on owner
+  expect(html).toContain("renderInvitePanel");   // non-owner lighter panel
+  expect(html).toContain("of 5 invites left");   // remaining line
+  expect(html).toContain("d.isOwner");           // owner branch → loadInvite (list)
   expect(html).toContain("/api/invite");
-  expect(html).toContain("/api/allowlist");
+  expect(html).toContain("/api/allowlist");      // owner-only list, inside loadInvite
   expect(html).toContain("c.last_error");        // badge driven by last_error
   expect(html).toContain("delayed");
+  expect(html).not.toContain("onclick=");        // still delegation, no fragile inline handlers
 });

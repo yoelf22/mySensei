@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -18,6 +18,8 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
+
+const INVITE_QUOTA = 5;
 
 async function sessionEmail(request, env) {
   const tok = getCookie(request, "session");
@@ -67,7 +69,11 @@ export default {
     if (pathname === "/api/courses") {
       const email = await sessionEmail(request, env);
       if (!email) return json({ error: "unauthorized" }, 401);
-      if (method === "GET") return json({ courses: await listCourses(env, email), isOwner: isOwner(email, env) });
+      if (method === "GET") {
+        const owner = isOwner(email, env);
+        const inviteRemaining = owner ? null : INVITE_QUOTA - (await countInvitesBy(env, email));
+        return json({ courses: await listCourses(env, email), isOwner: owner, inviteRemaining });
+      }
       if (method === "POST") return json(await createCourse(env, email));
       return json({ error: "method not allowed" }, 405);
     }
@@ -87,13 +93,15 @@ export default {
     if (pathname === "/api/invite" && method === "POST") {
       const email = await sessionEmail(request, env);
       if (!email) return json({ error: "unauthorized" }, 401);
-      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
       let body; try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400); }
       const invitee = String(body.email || "").trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(invitee)) return json({ error: "invalid email" }, 400);
-      await addToAllowlist(env, invitee);
-      await sendInvite(env, invitee);
-      return json({ ok: true, email: invitee });
+      const owner = isOwner(email, env);
+      if (!owner && (await countInvitesBy(env, email)) >= INVITE_QUOTA) return json({ error: "no invites left" }, 403);
+      const { inserted } = await addToAllowlist(env, invitee, email);
+      if (inserted) await sendInvite(env, invitee);
+      const remaining = owner ? null : INVITE_QUOTA - (await countInvitesBy(env, email));
+      return json({ ok: true, email: invitee, already: !inserted, remaining });
     }
 
     if (pathname === "/api/allowlist") {

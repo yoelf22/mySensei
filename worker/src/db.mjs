@@ -125,3 +125,32 @@ export async function putPage(env, courseId, path, html) {
        ON CONFLICT(course_id, path) DO UPDATE SET html=excluded.html, updated_at=excluded.updated_at`,
   ).bind(courseId, path, html, now()).run();
 }
+
+export async function createDispute(env, { courseId, module, attempt, questionIndex, payload }) {
+  const existing = await env.DB.prepare(
+    "SELECT id FROM disputes WHERE course_id=? AND module=? AND attempt=? AND question_index=?",
+  ).bind(courseId, module, attempt, questionIndex).first();
+  if (existing) return { id: existing.id, duplicate: true };
+
+  const id = randomId();
+  await env.DB.prepare(
+    "INSERT INTO disputes(id, course_id, module, attempt, question_index, payload, status, created_at) VALUES(?,?,?,?,?,?,?,?)",
+  ).bind(id, courseId, module, attempt, questionIndex, JSON.stringify(payload), "open", now()).run();
+  return { id, duplicate: false };
+}
+
+export async function getDispute(env, id) {
+  const row = await env.DB.prepare("SELECT * FROM disputes WHERE id = ?").bind(id).first();
+  if (!row) return null;
+  return {
+    ...row,
+    payload: row.payload ? JSON.parse(row.payload) : null,
+    ruling: row.ruling ? JSON.parse(row.ruling) : null,
+  };
+}
+
+export async function resolveDispute(env, id, status, ruling) {
+  await env.DB.prepare(
+    "UPDATE disputes SET status=?, ruling=?, resolved_at=? WHERE id=?",
+  ).bind(status, JSON.stringify(ruling ?? null), now(), id).run();
+}

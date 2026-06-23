@@ -95,3 +95,34 @@ describe("/submit dispute branch", () => {
     expect(r.status).toBe(400);
   });
 });
+
+describe("internal dispute API", () => {
+  const TOKEN = "tok-int";
+  const E = { ...env, INTERNAL_TOKEN: TOKEN };
+  const auth = { Authorization: "Bearer " + TOKEN, "Content-Type": "application/json" };
+  async function call(path, init) {
+    const ctx = createExecutionContext();
+    const res = await worker.fetch(new Request("https://app" + path, init), E, ctx);
+    await waitOnExecutionContext(ctx);
+    return res;
+  }
+
+  it("GET returns the dispute; PUT resolves it; 401 without the token", async () => {
+    await env.DB.exec("DELETE FROM disputes;");
+    const { id } = await createDispute(env, { courseId: "c9", module: 1, attempt: 1, questionIndex: 0, payload });
+    expect((await call(`/internal/dispute/${id}`, {})).status).toBe(401);
+
+    const got = await call(`/internal/dispute/${id}`, { headers: auth });
+    expect(got.status).toBe(200);
+    expect((await got.json()).course_id).toBe("c9");
+
+    const put = await call(`/internal/dispute/${id}`, { method: "PUT", headers: auth, body: JSON.stringify({ status: "rejected", ruling: { verdict: "stands", upheld: false } }) });
+    expect(put.status).toBe(200);
+    const after = await getDispute(env, id);
+    expect(after.status).toBe("rejected");
+  });
+
+  it("GET an unknown dispute id is 404", async () => {
+    expect((await call(`/internal/dispute/nope`, { headers: auth })).status).toBe(404);
+  });
+});

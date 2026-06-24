@@ -8,6 +8,7 @@ GITHUB_OWNER = "yoelf22"
 GITHUB_REPO = "mySensei"
 APP_BASE_URL = "https://mysensei-quiz-helper.yoelf22mysensei.workers.dev"
 OWNER_EMAIL = "yoel.frischoff@gmail.com"
+ADMIN_USERNAME = "admin"
 
 [[d1_databases]]
 binding = "DB"

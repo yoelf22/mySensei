@@ -117,6 +117,23 @@ Check your inbox, open the attached `.html`, take the quiz. Passing advances you
 failing re-teaches with different material next cadence. From then on the hourly
 schedule delivers on your chosen day(s) and time automatically.
 
+## Admin login
+
+The owner signs in at `/admin/login` with a username + password (not the
+magic-link flow — the owner email is refused there).
+
+1. Set the username in `worker/wrangler.toml` → `[vars] ADMIN_USERNAME`.
+2. Generate the password hash and set it as a Worker secret:
+   ```
+   printf '%s' 'YOUR-ADMIN-PASSWORD' | shasum -a 256   # copy the 64-char hex
+   cd worker && npx wrangler secret put ADMIN_PASSWORD_HASH   # paste the hex
+   ```
+3. Redeploy: `cd worker && npm run deploy`.
+
+Then visit `/admin/login`, sign in, and you land on `/admin` (stats, the
+cross-user course list, user management, and invites). Your personal courses
+are at `/dashboard` (linked as "My courses").
+
 ---
 
 ## Changing settings later

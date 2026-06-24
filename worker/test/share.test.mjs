@@ -89,3 +89,43 @@ describe("onboarding prefill", () => {
     expect(html).toContain("for clubs");
   });
 });
+
+import { mintToken } from "../src/auth.mjs";
+
+describe("share accept via magic link", () => {
+  it("/auth/request with a valid non-full token sends a link to a NOT-allowlisted email and binds the share", async () => {
+    const { token } = await mkShare(env, { subject: "Chess", angle: "", createdBy: "s@x.com" });
+    const res = await call("/auth/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "new@x.com", shareToken: token }) });
+    expect(res.status).toBe(200);
+    expect(globalThis.fetch).toHaveBeenCalled(); // sendMagicLink fired
+    const row = await env.DB.prepare("SELECT share_token FROM magic_tokens WHERE email = 'new@x.com'").first();
+    expect(row.share_token).toBe(token);
+  });
+
+  it("/auth/request with no token and a non-allowlisted email sends nothing", async () => {
+    const res = await call("/auth/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "nobody@x.com" }) });
+    expect(res.status).toBe(200);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("/auth/verify on a share-bound token claims a use, allowlists, creates the preset course, redirects to onboarding", async () => {
+    const { token: share } = await mkShare(env, { subject: "Chess", angle: "for clubs", createdBy: "s@x.com" });
+    const magic = await mintToken(env, "new@x.com", share);
+    const res = await call("/auth/verify", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `token=${magic}` });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toMatch(/^\/c\/[a-z0-9]+\/onboard$/);
+    expect(res.headers.get("Set-Cookie")).toContain("session=");
+    expect((await getShare(env, share)).uses).toBe(1);
+    const allow = await env.DB.prepare("SELECT email FROM allowlist WHERE email = 'new@x.com'").first();
+    expect(allow).toBeTruthy();
+  });
+
+  it("/auth/verify shows 'full' if the share filled between request and verify", async () => {
+    const { token: share } = await mkShare(env, { subject: "X", angle: "", createdBy: "s@x.com", maxUses: 1 });
+    const magic = await mintToken(env, "late@x.com", share);
+    await claimUse(env, share); // someone else fills it first
+    const res = await call("/auth/verify", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `token=${magic}` });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toMatch(/full/i);
+  });
+});

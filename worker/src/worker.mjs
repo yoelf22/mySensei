@@ -42,11 +42,18 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
     if (method === "POST" && pathname === "/auth/request") {
-      let email = "";
-      try { email = String((await request.json()).email || "").trim().toLowerCase(); } catch {}
-      if (email && (await isAllowlisted(env, email))) {
-        const token = await mintToken(env, email);
-        await sendMagicLink(env, email, `${env.APP_BASE_URL}/auth/verify?token=${token}`);
+      let email = "", shareToken = "";
+      try { const b = await request.json(); email = String(b.email || "").trim().toLowerCase(); shareToken = String(b.shareToken || ""); } catch {}
+      if (email) {
+        let boundShare = null;
+        if (shareToken) {
+          const share = await getShare(env, shareToken);
+          if (share && share.uses < share.max_uses) boundShare = shareToken;
+        }
+        if (boundShare || (await isAllowlisted(env, email))) {
+          const token = await mintToken(env, email, boundShare);
+          await sendMagicLink(env, email, `${env.APP_BASE_URL}/auth/verify?token=${token}`);
+        }
       }
       return json({ ok: true }); // always 200 — no user enumeration
     }
@@ -62,9 +69,17 @@ export default {
       const form = await request.formData();
       const consumed = await consumeToken(env, String(form.get("token") || ""));
       if (!consumed) return new Response("This link is invalid or expired. Request a new one.", { status: 400 });
-      const { email } = consumed;
+      const { email, shareToken } = consumed;
+      let location = "/dashboard";
+      if (shareToken) {
+        if (!(await claimShareUse(env, shareToken))) return new Response("This share link is full.", { status: 400 });
+        await addToAllowlist(env, email, "share");
+        const share = await getShare(env, shareToken);
+        const { id } = await createCourse(env, email, share.subject, share.angle || null);
+        location = `/c/${id}/onboard`;
+      }
       const cookie = sessionCookie(await signSession(email, env.SESSION_SECRET));
-      return new Response(null, { status: 302, headers: { Location: "/dashboard", "Set-Cookie": cookie } });
+      return new Response(null, { status: 302, headers: { Location: location, "Set-Cookie": cookie } });
     }
 
     if (pathname === "/api/courses") {

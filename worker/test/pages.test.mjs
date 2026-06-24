@@ -56,3 +56,14 @@ it("dashboard shows an invite panel to everyone; the allowlist list stays owner-
   expect(html).toContain("delayed");
   expect(html).not.toContain("onclick=");        // still delegation, no fragile inline handlers
 });
+
+import { adminPage } from "../src/pages.mjs";
+it("adminPage renders the chart, summary, course table, and user management", async () => {
+  const html = adminPage();
+  expect(html).toContain("/api/admin/stats");   // fetches the feed
+  expect(html).toContain("function chart(");     // inline SVG chart
+  expect(html).toContain("Users");               // user management block
+  expect(html).toContain("/api/allowlist");      // list + remove
+  expect(html).toContain('class="blue"');        // blue invite button
+  expect(html).not.toContain("onclick=");
+});

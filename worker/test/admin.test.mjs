@@ -2,6 +2,9 @@ import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import worker from "../src/worker.mjs";
 import { verifySession } from "../src/auth.mjs";
+import { signSession as sign2 } from "../src/auth.mjs";
+const ownerCookie = async () => ({ Cookie: "session=" + (await sign2("owner@x.com", "s")) });
+const otherCookie = async () => ({ Cookie: "session=" + (await sign2("nobody@x.com", "s")) });
 
 // ADMIN_PASSWORD_HASH below is SHA-256("abc").
 const E = { ...env, SESSION_SECRET: "s", OWNER_EMAIL: "owner@x.com",
@@ -50,6 +53,23 @@ describe("admin login", () => {
     expect(badUser.status).toBe(200);
     expect(badUser.headers.get("Set-Cookie")).toBe(null);
     expect(await badUser.text()).toMatch(/wrong username or password/i);
+  });
+});
+
+describe("/admin page + stats feed", () => {
+  it("GET /admin serves the page for the owner, redirects others to /admin/login", async () => {
+    expect((await call("/admin", { headers: await ownerCookie() })).status).toBe(200);
+    const other = await call("/admin", { headers: await otherCookie() });
+    expect(other.status).toBe(302);
+    expect(other.headers.get("Location")).toBe("/admin/login");
+    const anon = await call("/admin", {});
+    expect(anon.status).toBe(302);
+  });
+
+  it("GET /api/admin/stats is owner-only", async () => {
+    expect((await call("/api/admin/stats", { headers: await ownerCookie() })).status).toBe(200);
+    expect((await call("/api/admin/stats", { headers: await otherCookie() })).status).toBe(403);
+    expect((await call("/api/admin/stats", {})).status).toBe(401);
   });
 });
 

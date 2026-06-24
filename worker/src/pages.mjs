@@ -10,7 +10,11 @@ a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:sy
 .badge{font-family:system-ui,sans-serif;font-size:.75rem;color:#fff;background:#b4541f;border-radius:.3rem;padding:.05rem .4rem}
 #invite{border-top:1px solid #e7e1d5;margin-top:2rem;padding-top:1rem}
 .allow{list-style:none;padding:0;font-family:system-ui,sans-serif;font-size:.9rem}
-.allow li{padding:.3rem 0}</style></head><body>${body}</body></html>`;
+.allow li{padding:.3rem 0}
+.tbl{border-collapse:collapse;width:100%;font-family:system-ui,sans-serif;font-size:.9rem;margin-top:1rem}
+.tbl th,.tbl td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid #e7e1d5}
+.tbl th{color:#6b6457;font-weight:600}
+.blue{background:#1f6fb4}</style></head><body>${body}</body></html>`;
 
 export function loginPage() {
   return SHELL("mySensei — sign in", `<h1>mySensei</h1><p class="muted">Enter your email; we'll send a sign-in link.</p>
@@ -55,6 +59,72 @@ ${error ? '<p class="muted" style="color:#b4541f">Wrong username or password.</p
 <p><input type="password" name="password" placeholder="password" autocomplete="current-password" required></p>
 <p><button type="submit">Sign in</button></p>
 </form>`);
+}
+
+export function adminPage() {
+  return SHELL("mySensei — admin", `<h1>Admin</h1>
+<p><a class="open" href="/dashboard">← My courses</a></p>
+<div id="stats" class="muted">Loading…</div>
+<div id="users"></div>
+<script>
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
+function chart(series){
+  if(!series.length) return "";
+  var W=640,H=220,P=34;
+  var xs=series.map(function(p){return Date.parse(p.date);});
+  var minx=Math.min.apply(null,xs), maxx=Math.max.apply(null,xs);
+  var maxy=Math.max.apply(null,series.map(function(p){return p.total;}));
+  function X(t){return maxx===minx?(W/2):(P+(W-2*P)*(t-minx)/(maxx-minx));}
+  function Y(v){return maxy===0?(H-P):(H-P-(H-2*P)*v/maxy);}
+  var pts=series.map(function(p){return X(Date.parse(p.date)).toFixed(1)+","+Y(p.total).toFixed(1);}).join(" ");
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Total courses started over time">'
+    +'<line x1="'+P+'" y1="'+(H-P)+'" x2="'+(W-P)+'" y2="'+(H-P)+'" stroke="#e7e1d5"/>'
+    +'<polyline fill="none" stroke="#b4541f" stroke-width="2" points="'+pts+'"/>'
+    +'<text x="'+P+'" y="'+(H-10)+'" font-size="11" fill="#6b6457">'+esc(series[0].date)+'</text>'
+    +'<text x="'+(W-P)+'" y="'+(H-10)+'" font-size="11" fill="#6b6457" text-anchor="end">'+esc(series[series.length-1].date)+'</text>'
+    +'<text x="'+P+'" y="'+(P-12)+'" font-size="11" fill="#6b6457">'+maxy+' total</text>'
+    +'</svg>';
+}
+function render(d){
+  var s=document.getElementById("stats"); s.className="";
+  if(!d.courses.length){s.innerHTML="<p>No courses started yet.</p>";return;}
+  var sum=d.summary;
+  var rows=d.courses.map(function(c){
+    return '<tr><td>'+esc(c.topic)+'</td><td>'+esc(c.status)+'</td><td>'+esc((c.startedAt||"").slice(0,10))+'</td></tr>';
+  }).join("");
+  s.innerHTML=chart(d.series)
+    +'<p class="muted">'+sum.started+' started \xb7 '+sum.active+' active \xb7 '+sum.paused+' paused \xb7 '+sum.done+' done</p>'
+    +'<table class="tbl"><thead><tr><th>Topic</th><th>Status</th><th>Started</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function loadStats(){
+  fetch("/api/admin/stats").then(function(r){if(r.status===401||r.status===403){location.href="/admin/login";return;}return r.json();})
+    .then(function(d){if(d)render(d);})
+    .catch(function(){document.getElementById("stats").textContent="Couldn't load stats.";});
+}
+function loadInvite(){
+  var box=document.getElementById("users");
+  fetch("/api/allowlist").then(function(r){return r.ok?r.json():{emails:[]};}).then(function(d){
+    var rows=(d.emails||[]).map(function(e){return '<li>'+esc(e)+' <button data-rm="'+esc(e)+'">remove</button></li>';}).join("");
+    box.innerHTML='<h2>Users</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn" class="blue">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul>';
+  });
+}
+function invite(){
+  var em=document.getElementById("invemail").value, msg=document.getElementById("invmsg");
+  fetch("/api/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})})
+    .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+    .then(function(res){
+      if(!res.ok){msg.textContent="Could not invite (check the address).";return;}
+      msg.textContent=res.d.already?(em+" is already invited."):("Invited "+em);
+      loadInvite();
+    });
+}
+function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
+document.getElementById("users").addEventListener("click",function(e){
+  if(e.target.id==="invbtn")invite();
+  var rm=e.target.closest("button[data-rm]"); if(rm)rmAllow(rm.getAttribute("data-rm"));
+});
+loadStats(); loadInvite();
+</script>`);
 }
 
 export function dashboardPage() {

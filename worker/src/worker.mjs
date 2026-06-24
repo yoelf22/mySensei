@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -7,7 +7,7 @@ import { signSession, verifySession, mintToken, consumeToken, sha256Hex, timingS
 import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch, buildDisputeRecord, postDispatch } from "./dispatch.mjs";
-import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage, adminLoginPage } from "./pages.mjs";
+import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage, adminLoginPage, adminPage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
@@ -169,6 +169,14 @@ export default {
       return json({ ok: true });
     }
 
+    if (pathname === "/api/admin/stats") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
+      if (method === "GET") return json(await adminStats(env));
+      return json({ error: "method not allowed" }, 405);
+    }
+
     if (method === "POST" && pathname === "/submit") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400, CORS); }
@@ -195,6 +203,11 @@ export default {
     const html = (s) => new Response(s, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     if (method === "GET" && pathname === "/") return html(loginPage());
     if (method === "GET" && pathname === "/dashboard") return html(dashboardPage());
+    if (method === "GET" && pathname === "/admin") {
+      const email = await sessionEmail(request, env);
+      if (!isOwner(email, env)) return new Response(null, { status: 302, headers: { Location: "/admin/login" } });
+      return html(adminPage());
+    }
 
     const shareGet = pathname.match(/^\/share\/([a-z0-9]+)$/);
     if (method === "GET" && shareGet) {

@@ -213,6 +213,21 @@ describe("adminStats", () => {
     expect(s.series).toEqual([]);
     expect(s.summary).toEqual({ started: 0, active: 0, paused: 0, done: 0 });
   });
+
+  it("reports lessons = delivered count (0 when no progress), no email leak", async () => {
+    await env.DB.exec("DELETE FROM courses;");
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, progress, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
+    ).bind("c1", "u@x.com", "active", "Chess", JSON.stringify({ delivered: [{ module: 1 }, { module: 2 }, { module: 3 }] }), "2026-06-01T10:00:00Z", "2026-06-01T10:00:00Z").run();
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, progress, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
+    ).bind("c2", "u@x.com", "active", "Go", null, "2026-06-02T10:00:00Z", "2026-06-02T10:00:00Z").run();
+    const s = await adminStats(env);
+    const byTopic = Object.fromEntries(s.courses.map((c) => [c.topic, c.lessons]));
+    expect(byTopic.Chess).toBe(3);
+    expect(byTopic.Go).toBe(0);
+    expect(JSON.stringify(s)).not.toMatch(/@/);
+  });
 });
 
 // helper: read the raw row (columns un-parsed) for mapping tests

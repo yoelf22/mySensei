@@ -186,9 +186,16 @@ export async function claimShareUse(env, token) {
 
 export async function adminStats(env) {
   const { results } = await env.DB.prepare(
-    "SELECT subject, status, created_at FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
+    "SELECT subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
   ).all();
-  const courses = results.map((r) => ({ topic: r.subject, status: r.status, startedAt: r.created_at }));
+  const courses = results.map((r) => {
+    let lessons = 0;
+    try {
+      const p = r.progress ? JSON.parse(r.progress) : null;
+      if (p && Array.isArray(p.delivered)) lessons = p.delivered.length;
+    } catch { /* malformed progress → 0 */ }
+    return { topic: r.subject, status: r.status, startedAt: r.created_at, lessons };
+  });
 
   const byDay = new Map();
   for (const r of results) {

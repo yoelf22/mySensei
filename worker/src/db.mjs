@@ -183,3 +183,29 @@ export async function claimShareUse(env, token) {
   ).bind(token).run();
   return res.meta.changes === 1;
 }
+
+export async function adminStats(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT subject, status, created_at FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
+  ).all();
+  const courses = results.map((r) => ({ topic: r.subject, status: r.status, startedAt: r.created_at }));
+
+  const byDay = new Map();
+  for (const r of results) {
+    const day = String(r.created_at).slice(0, 10);
+    byDay.set(day, (byDay.get(day) || 0) + 1);
+  }
+  let running = 0;
+  const series = [...byDay.keys()].sort().map((date) => {
+    running += byDay.get(date);
+    return { date, total: running };
+  });
+
+  const summary = {
+    started: courses.length,
+    active: courses.filter((c) => c.status === "active").length,
+    paused: courses.filter((c) => c.status === "paused").length,
+    done: courses.filter((c) => c.status === "done").length,
+  };
+  return { courses, series, summary };
+}

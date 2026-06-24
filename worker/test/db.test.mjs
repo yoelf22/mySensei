@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy, createShare, getShare, claimShareUse } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy, createShare, getShare, claimShareUse, adminStats } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -184,6 +184,34 @@ describe("course sharing db", () => {
     expect(c.status).toBe("draft");
     const bare = await getCourse(env, (await createCourse(env, "u@x.com")).id);
     expect(bare.subject == null || bare.subject === "").toBe(true);
+  });
+});
+
+describe("adminStats", () => {
+  async function seed(id, subject, status, createdAt) {
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, created_at, updated_at) VALUES(?,?,?,?,?,?)",
+    ).bind(id, "u@x.com", status, subject, createdAt, createdAt).run();
+  }
+  beforeEach(async () => { await env.DB.exec("DELETE FROM courses;"); });
+
+  it("cumulative series, excludes empty-subject drafts, tallies status, no emails", async () => {
+    await seed("a1", "Chess", "active", "2026-06-01T10:00:00Z");
+    await seed("a2", "Go", "paused", "2026-06-01T12:00:00Z");
+    await seed("a3", "Tea", "done", "2026-06-03T09:00:00Z");
+    await seed("a4", "", "draft", "2026-06-04T09:00:00Z"); // empty subject → excluded
+    const s = await adminStats(env);
+    expect(s.summary).toEqual({ started: 3, active: 1, paused: 1, done: 1 });
+    expect(s.series).toEqual([{ date: "2026-06-01", total: 2 }, { date: "2026-06-03", total: 3 }]);
+    expect(s.courses.length).toBe(3);
+    expect(JSON.stringify(s)).not.toMatch(/@/); // never leaks an email
+  });
+
+  it("returns empty shapes when there are no started courses", async () => {
+    const s = await adminStats(env);
+    expect(s.courses).toEqual([]);
+    expect(s.series).toEqual([]);
+    expect(s.summary).toEqual({ started: 0, active: 0, paused: 0, done: 0 });
   });
 });
 

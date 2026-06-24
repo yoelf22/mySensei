@@ -1,10 +1,23 @@
 // worker/test/auth.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { signSession, verifySession, mintToken, consumeToken } from "../src/auth.mjs";
+import { signSession, verifySession, mintToken, consumeToken, sha256Hex, timingSafeEqual } from "../src/auth.mjs";
 
 const SECRET = "test-secret";
 beforeEach(async () => { await env.DB.exec("DELETE FROM magic_tokens;"); });
+
+describe("admin auth helpers", () => {
+  it("sha256Hex matches a known vector", async () => {
+    // SHA-256("abc")
+    expect(await sha256Hex("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+  });
+  it("timingSafeEqual compares by value and rejects length mismatch", () => {
+    expect(timingSafeEqual("abcd", "abcd")).toBe(true);
+    expect(timingSafeEqual("abcd", "abce")).toBe(false);
+    expect(timingSafeEqual("abc", "abcd")).toBe(false);
+    expect(timingSafeEqual("", "")).toBe(true);
+  });
+});
 
 describe("auth", () => {
   it("session round-trips and rejects tampering + expiry", async () => {

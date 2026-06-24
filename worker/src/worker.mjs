@@ -48,8 +48,8 @@ export default {
       const f = await request.formData();
       const username = String(f.get("username") || "");
       const password = String(f.get("password") || "");
-      const okUser = !!env.ADMIN_USERNAME && timingSafeEqual(username, env.ADMIN_USERNAME);
-      const okPass = !!env.ADMIN_PASSWORD_HASH && timingSafeEqual(await sha256Hex(password), env.ADMIN_PASSWORD_HASH);
+      const okUser = timingSafeEqual(username, String(env.ADMIN_USERNAME || ""));
+      const okPass = timingSafeEqual(await sha256Hex(password), String(env.ADMIN_PASSWORD_HASH || ""));
       if (!okUser || !okPass) {
         return new Response(adminLoginPage(true), { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
       }

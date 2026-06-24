@@ -49,6 +49,7 @@ describe("admin login", () => {
     const badUser = await call("/admin/login", form({ username: "nobody", password: "abc" }));
     expect(badUser.status).toBe(200);
     expect(badUser.headers.get("Set-Cookie")).toBe(null);
+    expect(await badUser.text()).toMatch(/wrong username or password/i);
   });
 });
 

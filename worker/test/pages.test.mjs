@@ -36,6 +36,15 @@ it("dashboard cards link to open the course by status", async () => {
   expect(html).toContain('return "/c/"+id;'); // built courses open the contents page
 });
 
+it("dashboard course cards expose a Share control wired by delegation", async () => {
+  const html = await (await get("/dashboard")).text();
+  expect(html).toContain("data-share");          // per-card share button
+  expect(html).toContain("function share(");      // share handler
+  expect(html).toContain("/api/courses/");
+  expect(html).toContain("/share");
+  expect(html).not.toContain("onclick=");          // delegation, no inline handlers
+});
+
 it("dashboard shows an invite panel to everyone; the allowlist list stays owner-only", async () => {
   const html = await (await get("/dashboard")).text();
   expect(html).toContain("renderInvitePanel");   // non-owner lighter panel

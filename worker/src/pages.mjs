@@ -83,6 +83,13 @@ function invite(){
     });
 }
 function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
+function share(id){
+  var box=document.querySelector('[data-sb="'+id+'"]'); if(box) box.textContent="…";
+  fetch("/api/courses/"+id+"/share",{method:"POST"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d||!d.url){ if(box) box.textContent="(couldn't make a link)"; return; }
+    if(box){ box.innerHTML='<input readonly value="'+esc(d.url)+'" style="width:100%">'; box.querySelector("input").select(); }
+  });
+}
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
   IS_OWNER=!!d.isOwner;
@@ -95,11 +102,15 @@ function load(){fetch("/api/courses").then(function(r){if(r.status===401){locati
     if(c.status==="active")btn='<button data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
     var badge=c.last_error?' <span class="badge">⚠ delayed</span>':'';
     var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
-    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p>'+open+btn+'</p></div>';
+    var shareBtn=c.subject?'<button data-share="'+esc(c.id)+'">Share</button> <span class="muted" data-sb="'+esc(c.id)+'"></span>':'';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p>'+open+btn+shareBtn+'</p></div>';
   }).join("");
 });}
 function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}
-document.getElementById("list").addEventListener("click",function(e){var b=e.target.closest("button[data-act]");if(b)act(b.getAttribute("data-id"),b.getAttribute("data-act"));});
+document.getElementById("list").addEventListener("click",function(e){
+  var b=e.target.closest("button[data-act]");if(b){act(b.getAttribute("data-id"),b.getAttribute("data-act"));return;}
+  var s=e.target.closest("button[data-share]");if(s){share(s.getAttribute("data-share"));}
+});
 document.getElementById("invite").addEventListener("click",function(e){
   if(e.target.id==="invbtn")invite();
   var rm=e.target.closest("button[data-rm]"); if(rm)rmAllow(rm.getAttribute("data-rm"));

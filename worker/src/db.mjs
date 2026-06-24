@@ -22,8 +22,18 @@ export async function isAllowlisted(env, email) {
   return !!row;
 }
 
-export async function addToAllowlist(env, email) {
-  await env.DB.prepare("INSERT OR IGNORE INTO allowlist(email, added_at) VALUES(?, ?)").bind(norm(email), now()).run();
+export async function addToAllowlist(env, email, invitedBy = null) {
+  const res = await env.DB.prepare(
+    "INSERT OR IGNORE INTO allowlist(email, added_at, invited_by) VALUES(?, ?, ?)",
+  ).bind(norm(email), now(), invitedBy ? norm(invitedBy) : null).run();
+  return { inserted: res.meta.changes === 1 };
+}
+
+export async function countInvitesBy(env, email) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM allowlist WHERE invited_by = ?",
+  ).bind(norm(email)).first();
+  return row.n;
 }
 export async function listAllowlist(env) {
   const { results } = await env.DB.prepare("SELECT email FROM allowlist ORDER BY added_at").all();

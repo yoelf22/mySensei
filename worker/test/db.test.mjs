@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -117,6 +117,40 @@ describe("last_error", () => {
     expect((await getCourse(env, id)).last_error).toBe("boom");
     await saveCurriculum(env, id, { progress: { status: "active" } });
     expect((await getCourse(env, id)).last_error).toBe(null);
+  });
+});
+
+describe("invite quota tracking", () => {
+  beforeEach(async () => { await env.DB.exec("DELETE FROM allowlist;"); });
+
+  it("addToAllowlist reports a fresh insert and records the inviter", async () => {
+    const r = await addToAllowlist(env, "Friend@Y.com", "Me@X.com");
+    expect(r.inserted).toBe(true);
+    expect(await listAllowlist(env)).toContain("friend@y.com");
+    expect(await countInvitesBy(env, "me@x.com")).toBe(1);
+  });
+
+  it("addToAllowlist on an existing email is not a fresh insert", async () => {
+    await addToAllowlist(env, "dup@y.com", "me@x.com");
+    const again = await addToAllowlist(env, "dup@y.com", "someone-else@x.com");
+    expect(again.inserted).toBe(false);
+    // the inviter is not overwritten, and no second invite is counted
+    expect(await countInvitesBy(env, "me@x.com")).toBe(1);
+    expect(await countInvitesBy(env, "someone-else@x.com")).toBe(0);
+  });
+
+  it("addToAllowlist without an inviter stores NULL and counts for no one", async () => {
+    const r = await addToAllowlist(env, "seed@y.com");
+    expect(r.inserted).toBe(true);
+    expect(await countInvitesBy(env, "")).toBe(0);
+  });
+
+  it("countInvitesBy counts only that user's invited rows", async () => {
+    await addToAllowlist(env, "a@y.com", "me@x.com");
+    await addToAllowlist(env, "b@y.com", "me@x.com");
+    await addToAllowlist(env, "c@y.com", "other@x.com");
+    expect(await countInvitesBy(env, "me@x.com")).toBe(2);
+    expect(await countInvitesBy(env, "other@x.com")).toBe(1);
   });
 });
 

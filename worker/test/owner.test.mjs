@@ -24,9 +24,9 @@ describe("owner tooling", () => {
     expect((await (await call("/api/courses", { headers: await jh(OWNER) })).json()).isOwner).toBe(true);
     expect((await (await call("/api/courses", { headers: await jh("nobody@x.com") })).json()).isOwner).toBe(false);
   });
-  it("invite/allowlist are 403 for a non-owner", async () => {
-    expect((await call("/api/invite", { method: "POST", headers: await jh("nobody@x.com"), body: JSON.stringify({ email: "x@y.com" }) })).status).toBe(403);
+  it("allowlist list stays 403 for a non-owner", async () => {
     expect((await call("/api/allowlist", { headers: await jh("nobody@x.com") })).status).toBe(403);
+    expect((await call("/api/allowlist/remove", { method: "POST", headers: await jh("nobody@x.com"), body: JSON.stringify({ email: "x@y.com" }) })).status).toBe(403);
   });
   it("owner invites: adds to allowlist + fires the invite dispatch", async () => {
     const res = await call("/api/invite", { method: "POST", headers: await jh(OWNER), body: JSON.stringify({ email: "New@Y.com" }) });
@@ -40,5 +40,41 @@ describe("owner tooling", () => {
     await call("/api/invite", { method: "POST", headers: await jh(OWNER), body: JSON.stringify({ email: "a@y.com" }) });
     expect((await call("/api/allowlist/remove", { method: "POST", headers: await jh(OWNER), body: JSON.stringify({ email: "a@y.com" }) })).status).toBe(200);
     expect((await call("/api/allowlist/remove", { method: "POST", headers: await jh(OWNER), body: JSON.stringify({ email: OWNER }) })).status).toBe(400);
+  });
+
+  it("a non-owner can invite within a quota of 5, then is refused", async () => {
+    const u = await jh("user@x.com");
+    for (let i = 1; i <= 5; i++) {
+      const res = await call("/api/invite", { method: "POST", headers: u, body: JSON.stringify({ email: `g${i}@y.com` }) });
+      expect(res.status).toBe(200);
+      expect((await res.json()).remaining).toBe(5 - i);
+    }
+    const sixth = await call("/api/invite", { method: "POST", headers: u, body: JSON.stringify({ email: "g6@y.com" }) });
+    expect(sixth.status).toBe(403);
+    expect((await sixth.json()).error).toBe("no invites left");
+  });
+
+  it("the owner can invite past 5 with remaining null", async () => {
+    const o = await jh(OWNER);
+    for (let i = 1; i <= 6; i++) {
+      const res = await call("/api/invite", { method: "POST", headers: o, body: JSON.stringify({ email: `o${i}@y.com` }) });
+      expect(res.status).toBe(200);
+      expect((await res.json()).remaining).toBe(null);
+    }
+  });
+
+  it("re-inviting an already-allowlisted email does not consume quota", async () => {
+    const u = await jh("user@x.com");
+    await call("/api/invite", { method: "POST", headers: u, body: JSON.stringify({ email: "same@y.com" }) });
+    const again = await call("/api/invite", { method: "POST", headers: u, body: JSON.stringify({ email: "same@y.com" }) });
+    const body = await again.json();
+    expect(again.status).toBe(200);
+    expect(body.already).toBe(true);
+    expect(body.remaining).toBe(4); // still only one invite spent
+  });
+
+  it("/api/courses reports inviteRemaining (number for a user, null for the owner)", async () => {
+    expect((await (await call("/api/courses", { headers: await jh(OWNER) })).json()).inviteRemaining).toBe(null);
+    expect((await (await call("/api/courses", { headers: await jh("fresh@x.com") })).json()).inviteRemaining).toBe(5);
   });
 });

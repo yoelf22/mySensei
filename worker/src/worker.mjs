@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -89,6 +89,17 @@ export default {
       if ((await countActive(env, email)) >= 3) return json({ error: "cap" }, 409);
       await setStatus(env, course.id, "active");
       return json({ ok: true });
+    }
+
+    const shareReq = pathname.match(/^\/api\/courses\/([a-z0-9]+)\/share$/);
+    if (shareReq && method === "POST") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      const course = await getCourse(env, shareReq[1]);
+      if (!course || course.owner_email !== email) return json({ error: "not found" }, 404);
+      if (!course.subject) return json({ error: "nothing to share yet" }, 400);
+      const { token } = await createShare(env, { subject: course.subject, angle: course.angle || "", createdBy: email });
+      return json({ ok: true, url: `${env.APP_BASE_URL}/share/${token}` });
     }
 
     if (pathname === "/api/invite" && method === "POST") {

@@ -46,12 +46,12 @@ export async function setLastError(env, id, msg) {
   await env.DB.prepare("UPDATE courses SET last_error = ?, updated_at = ? WHERE id = ?").bind(msg || null, now(), id).run();
 }
 
-export async function createCourse(env, ownerEmail) {
+export async function createCourse(env, ownerEmail, subject = null, angle = null) {
   const id = randomId();
   const t = now();
   await env.DB.prepare(
-    "INSERT INTO courses(id, owner_email, status, created_at, updated_at) VALUES(?,?,?,?,?)",
-  ).bind(id, norm(ownerEmail), "draft", t, t).run();
+    "INSERT INTO courses(id, owner_email, status, subject, angle, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
+  ).bind(id, norm(ownerEmail), "draft", subject, angle, t, t).run();
   return { id };
 }
 
@@ -163,4 +163,23 @@ export async function resolveDispute(env, id, status, ruling) {
   await env.DB.prepare(
     "UPDATE disputes SET status=?, ruling=?, resolved_at=? WHERE id=?",
   ).bind(status, JSON.stringify(ruling ?? null), now(), id).run();
+}
+
+export async function createShare(env, { subject, angle, createdBy, maxUses = 10 }) {
+  const token = randomId(24);
+  await env.DB.prepare(
+    "INSERT INTO shares(token, subject, angle, max_uses, uses, created_by, created_at) VALUES(?,?,?,?,0,?,?)",
+  ).bind(token, subject, angle || null, maxUses, norm(createdBy), now()).run();
+  return { token };
+}
+
+export async function getShare(env, token) {
+  return env.DB.prepare("SELECT * FROM shares WHERE token = ?").bind(token).first();
+}
+
+export async function claimShareUse(env, token) {
+  const res = await env.DB.prepare(
+    "UPDATE shares SET uses = uses + 1 WHERE token = ? AND uses < max_uses",
+  ).bind(token).run();
+  return res.meta.changes === 1;
 }

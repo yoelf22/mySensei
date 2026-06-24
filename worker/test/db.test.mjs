@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy, createShare, getShare, claimShareUse } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -151,6 +151,39 @@ describe("invite quota tracking", () => {
     await addToAllowlist(env, "c@y.com", "other@x.com");
     expect(await countInvitesBy(env, "me@x.com")).toBe(2);
     expect(await countInvitesBy(env, "other@x.com")).toBe(1);
+  });
+});
+
+describe("course sharing db", () => {
+  beforeEach(async () => { await env.DB.exec("DELETE FROM shares; DELETE FROM courses;"); });
+
+  it("createShare + getShare round-trip", async () => {
+    const { token } = await createShare(env, { subject: "Chess", angle: "for clubs", createdBy: "Me@X.com" });
+    const row = await getShare(env, token);
+    expect(row.subject).toBe("Chess");
+    expect(row.angle).toBe("for clubs");
+    expect(row.max_uses).toBe(10);
+    expect(row.uses).toBe(0);
+    expect(row.created_by).toBe("me@x.com");
+  });
+
+  it("claimShareUse is atomic and stops at max_uses", async () => {
+    const { token } = await createShare(env, { subject: "X", angle: "", createdBy: "a@x.com", maxUses: 2 });
+    expect(await claimShareUse(env, token)).toBe(true);
+    expect(await claimShareUse(env, token)).toBe(true);
+    expect(await claimShareUse(env, token)).toBe(false);
+    expect((await getShare(env, token)).uses).toBe(2);
+    expect(await claimShareUse(env, "nope")).toBe(false);
+  });
+
+  it("createCourse can preset subject + angle", async () => {
+    const { id } = await createCourse(env, "u@x.com", "Chess", "for clubs");
+    const c = await getCourse(env, id);
+    expect(c.subject).toBe("Chess");
+    expect(c.angle).toBe("for clubs");
+    expect(c.status).toBe("draft");
+    const bare = await getCourse(env, (await createCourse(env, "u@x.com")).id);
+    expect(bare.subject == null || bare.subject === "").toBe(true);
   });
 });
 

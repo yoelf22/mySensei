@@ -7,7 +7,7 @@ import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs"
 import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch, buildDisputeRecord, postDispatch } from "./dispatch.mjs";
-import { loginPage, dashboardPage, verifyPage } from "./pages.mjs";
+import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
@@ -162,6 +162,20 @@ export default {
     if (method === "GET" && pathname === "/") return html(loginPage());
     if (method === "GET" && pathname === "/dashboard") return html(dashboardPage());
 
+    const shareGet = pathname.match(/^\/share\/([a-z0-9]+)$/);
+    if (method === "GET" && shareGet) {
+      const token = shareGet[1];
+      const share = await getShare(env, token);
+      if (!share || share.uses >= share.max_uses) return html(shareUnavailablePage());
+      const sess = await sessionEmail(request, env);
+      if (sess) {
+        if (!(await claimShareUse(env, token))) return html(shareUnavailablePage());
+        const { id } = await createCourse(env, sess, share.subject, share.angle || null);
+        return new Response(null, { status: 302, headers: { Location: `/c/${id}/onboard` } });
+      }
+      return html(sharePage(share.subject, token));
+    }
+
     // Course contents page: the syllabus + every class created, served at /c/:id.
     const cm = pathname.match(/^\/c\/([a-z0-9]+)\/?$/);
     if (method === "GET" && cm) {
@@ -176,7 +190,7 @@ export default {
       if (slug === "onboard") {
         const row = await getCourse(env, cid);
         if (!row) return new Response("not found", { status: 404 });
-        return html(renderOnboardHtml({ webhookUrl: `${env.APP_BASE_URL}/submit`, courseId: cid }));
+        return html(renderOnboardHtml({ webhookUrl: `${env.APP_BASE_URL}/submit`, courseId: cid, subject: row.subject || "", angle: row.angle || "" }));
       }
       const page = await getPage(env, cid, slug);
       if (page == null) return new Response("not found", { status: 404 });

@@ -30,6 +30,23 @@ export function verifyPage(token) {
 <form method="POST" action="/auth/verify"><input type="hidden" name="token" value="${t}"><p><button type="submit">Sign in</button></p></form>`);
 }
 
+export function sharePage(subject, token) {
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  return SHELL("mySensei — start a shared course", `<h1>Learn ${esc(subject)}</h1>
+<p class="muted">Someone shared this course with you. Enter your email and we'll send a sign-in link to start your own copy.</p>
+<form id="f"><input type="email" name="email" required placeholder="you@example.com"><p><button>Send me a link</button></p><p id="m" class="muted"></p></form>
+<script>
+var TOKEN=${JSON.stringify(token)};
+document.getElementById("f").addEventListener("submit",function(e){e.preventDefault();var em=e.target.email.value;
+fetch("/auth/request",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em,shareToken:TOKEN})})
+.then(function(){document.getElementById("m").textContent="Check your email for a sign-in link to start the course.";});});
+</script>`);
+}
+
+export function shareUnavailablePage() {
+  return SHELL("mySensei", `<h1>Link unavailable</h1><p class="muted">This share link is no longer available — it may have expired or reached its limit.</p>`);
+}
+
 export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <div id="invite" style="display:none"></div>

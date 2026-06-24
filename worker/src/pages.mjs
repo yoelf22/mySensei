@@ -10,7 +10,8 @@ a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:sy
 .badge{font-family:system-ui,sans-serif;font-size:.75rem;color:#fff;background:#b4541f;border-radius:.3rem;padding:.05rem .4rem}
 #invite{border-top:1px solid #e7e1d5;margin-top:2rem;padding-top:1rem}
 .allow{list-style:none;padding:0;font-family:system-ui,sans-serif;font-size:.9rem}
-.allow li{padding:.3rem 0}
+.allow li{padding:.3rem 0;display:flex;justify-content:space-between;align-items:center}
+input[type=checkbox]{width:auto}
 .tbl{border-collapse:collapse;width:100%;font-family:system-ui,sans-serif;font-size:.9rem;margin-top:1rem}
 .tbl th,.tbl td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid #e7e1d5}
 .tbl th{color:#6b6457;font-weight:600}
@@ -93,11 +94,11 @@ function render(d){
   if(!d.courses.length){s.innerHTML="<p>No courses started yet.</p>";return;}
   var sum=d.summary;
   var rows=d.courses.map(function(c){
-    return '<tr><td>'+esc(c.topic)+'</td><td>'+esc(c.status)+'</td><td>'+esc((c.startedAt||"").slice(0,10))+'</td></tr>';
+    return '<tr><td>'+esc(c.topic)+'</td><td>'+esc(c.status)+'</td><td>'+esc((c.startedAt||"").slice(0,10))+'</td><td>'+esc(c.lessons)+'</td></tr>';
   }).join("");
   s.innerHTML=chart(d.series)
     +'<p class="muted">'+sum.started+' started \xb7 '+sum.active+' active \xb7 '+sum.paused+' paused \xb7 '+sum.done+' done</p>'
-    +'<table class="tbl"><thead><tr><th>Topic</th><th>Status</th><th>Started</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    +'<table class="tbl"><thead><tr><th>Topic</th><th>Status</th><th>Started</th><th>Lessons</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 function loadStats(){
   fetch("/api/admin/stats").then(function(r){if(r.status===401||r.status===403){location.href="/admin/login";return;}return r.json();})
@@ -107,8 +108,8 @@ function loadStats(){
 function loadInvite(){
   var box=document.getElementById("users");
   fetch("/api/allowlist").then(function(r){return r.ok?r.json():{emails:[]};}).then(function(d){
-    var rows=(d.emails||[]).map(function(e){return '<li>'+esc(e)+' <button data-rm="'+esc(e)+'">remove</button></li>';}).join("");
-    box.innerHTML='<h2>Users</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn" class="blue">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul>';
+    var rows=(d.emails||[]).map(function(e){return '<li><span>'+esc(e)+'</span><input type="checkbox" class="usel" value="'+esc(e)+'"></li>';}).join("");
+    box.innerHTML='<h2>Users</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn" class="blue">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul><p><button id="rmsel">Remove selected</button></p>';
   });
 }
 function invite(){
@@ -121,10 +122,18 @@ function invite(){
       loadInvite();
     });
 }
-function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
+function removeSelected(){
+  var boxes=document.querySelectorAll("input.usel:checked");
+  if(!boxes.length) return;
+  if(!confirm("Remove "+boxes.length+" user(s)?")) return;
+  var emails=[]; for(var i=0;i<boxes.length;i++) emails.push(boxes[i].value);
+  Promise.all(emails.map(function(em){
+    return fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});
+  })).then(loadInvite);
+}
 document.getElementById("users").addEventListener("click",function(e){
   if(e.target.id==="invbtn")invite();
-  var rm=e.target.closest("button[data-rm]"); if(rm)rmAllow(rm.getAttribute("data-rm"));
+  if(e.target.id==="rmsel")removeSelected();
 });
 loadStats(); loadInvite();
 </script>`);

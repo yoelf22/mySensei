@@ -14,7 +14,10 @@ a.open{display:inline-block;margin-inline-end:.7rem;color:#b4541f;font-family:sy
 .tbl{border-collapse:collapse;width:100%;font-family:system-ui,sans-serif;font-size:.9rem;margin-top:1rem}
 .tbl th,.tbl td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid #e7e1d5}
 .tbl th{color:#6b6457;font-weight:600}
-.blue{background:#1f6fb4}</style></head><body>${body}</body></html>`;
+.blue{background:#1f6fb4}
+.danger{background:#c0392b}
+.actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.share-group{margin-inline-start:.6rem;padding-inline-start:.7rem;border-inline-start:1px solid #e7e1d5}</style></head><body>${body}</body></html>`;
 
 export function loginPage() {
   return SHELL("mySensei — sign in", `<h1>mySensei</h1><p class="muted">Enter your email; we'll send a sign-in link.</p>
@@ -128,11 +131,10 @@ loadStats(); loadInvite();
 }
 
 export function dashboardPage() {
-  return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
+  return SHELL("mySensei — my courses", `<h1>My courses</h1><p><a id="adminlink" class="open" href="/admin" style="display:none">Admin</a></p><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <div id="invite" style="display:none"></div>
 <script>
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
-var IS_OWNER=false;
 function openHref(c){
   var id=encodeURIComponent(c.id);
   if(c.status==="draft")return "/c/"+id+"/onboard";
@@ -140,16 +142,9 @@ function openHref(c){
   if(c.status==="awaiting-approval")return "/c/"+id+"/syllabus";
   return "/c/"+id;
 }
-function loadInvite(){
-  var box=document.getElementById("invite"); box.style.display="block";
-  fetch("/api/allowlist").then(function(r){return r.ok?r.json():{emails:[]};}).then(function(d){
-    var rows=(d.emails||[]).map(function(e){return '<li>'+esc(e)+' <button data-rm="'+esc(e)+'">remove</button></li>';}).join("");
-    box.innerHTML='<h2>Invite</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul>';
-  });
-}
 function renderInvitePanel(remaining){
   var box=document.getElementById("invite"); box.style.display="block";
-  box.innerHTML='<h2>Invite</h2><p class="muted" id="invleft">'+esc(remaining)+' of 5 invites left</p><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn">Invite</button></p><p id="invmsg" class="muted"></p>';
+  box.innerHTML='<h2>Invite</h2><p class="muted" id="invleft">'+esc(remaining)+' of 5 invites left</p><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn" class="blue">Invite</button></p><p id="invmsg" class="muted"></p>';
 }
 function invite(){
   var em=document.getElementById("invemail").value, msg=document.getElementById("invmsg");
@@ -158,11 +153,9 @@ function invite(){
     .then(function(res){
       if(!res.ok){msg.textContent=(res.d&&res.d.error==="no invites left")?"You're out of invites.":"Could not invite (check the address).";return;}
       msg.textContent=res.d.already?(em+" is already invited."):("Invited "+em);
-      if(IS_OWNER){loadInvite();}
-      else{var left=document.getElementById("invleft");if(left&&res.d.remaining!=null){left.textContent=res.d.remaining+" of 5 invites left";}}
+      var left=document.getElementById("invleft");if(left&&res.d.remaining!=null){left.textContent=res.d.remaining+" of 5 invites left";}
     });
 }
-function rmAllow(email){fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})}).then(loadInvite);}
 function share(id){
   var box=document.querySelector('[data-sb="'+id+'"]'); if(box) box.textContent="…";
   fetch("/api/courses/"+id+"/share",{method:"POST"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
@@ -172,29 +165,29 @@ function share(id){
 }
 function load(){fetch("/api/courses").then(function(r){if(r.status===401){location.href="/";return;}return r.json();}).then(function(d){
   if(!d)return; var el=document.getElementById("list");
-  IS_OWNER=!!d.isOwner;
-  if(d.isOwner) loadInvite(); else renderInvitePanel(d.inviteRemaining);
+  if(d.isOwner){var a=document.getElementById("adminlink");if(a)a.style.display="inline";}
+  else renderInvitePanel(d.inviteRemaining);
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
   el.innerHTML=d.courses.map(function(c){
     var prog=c.progress?("module "+esc(c.progress.currentModule)):"";
     var btn="";
     if(c.status==="paused")btn='<button data-act="resume" data-id="'+esc(c.id)+'">Resume</button>';
-    if(c.status==="active")btn='<button data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
+    if(c.status==="active")btn='<button class="danger" data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
     var badge=c.last_error?' <span class="badge">⚠ delayed</span>':'';
     var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
-    var shareBtn=c.subject?'<button data-share="'+esc(c.id)+'">Share</button> <span class="muted" data-sb="'+esc(c.id)+'"></span>':'';
-    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p>'+open+btn+shareBtn+'</p></div>';
+    var shareBtn=c.subject?'<span class="share-group"><button data-share="'+esc(c.id)+'">Share</button> <span class="muted" data-sb="'+esc(c.id)+'"></span></span>':'';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p class="actions">'+open+btn+shareBtn+'</p></div>';
   }).join("");
 });}
-function act(id,what){fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});}
+function act(id,what){
+  if(what==="pause" && !confirm("Pause this course? Lessons stop until you resume.")) return;
+  fetch("/api/courses/"+id+"/"+what,{method:"POST"}).then(function(r){if(r.status===409){alert("You're at your active-course limit — pause one first.");}load();});
+}
 document.getElementById("list").addEventListener("click",function(e){
   var b=e.target.closest("button[data-act]");if(b){act(b.getAttribute("data-id"),b.getAttribute("data-act"));return;}
   var s=e.target.closest("button[data-share]");if(s){share(s.getAttribute("data-share"));}
 });
-document.getElementById("invite").addEventListener("click",function(e){
-  if(e.target.id==="invbtn")invite();
-  var rm=e.target.closest("button[data-rm]"); if(rm)rmAllow(rm.getAttribute("data-rm"));
-});
+document.getElementById("invite").addEventListener("click",function(e){ if(e.target.id==="invbtn")invite(); });
 document.getElementById("new").addEventListener("click",function(){fetch("/api/courses",{method:"POST"}).then(function(r){return r.json();}).then(function(d){location.href="/c/"+d.id+"/onboard";});});
 load();
 </script>`);

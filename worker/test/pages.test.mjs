@@ -45,16 +45,24 @@ it("dashboard course cards expose a Share control wired by delegation", async ()
   expect(html).not.toContain("onclick=");          // delegation, no inline handlers
 });
 
-it("dashboard shows an invite panel to everyone; the allowlist list stays owner-only", async () => {
+it("dashboard: owner gets an Admin link and no allowlist panel; non-owner keeps the quota panel", async () => {
   const html = await (await get("/dashboard")).text();
-  expect(html).toContain("renderInvitePanel");   // non-owner lighter panel
-  expect(html).toContain("of 5 invites left");   // remaining line
-  expect(html).toContain("d.isOwner");           // owner branch → loadInvite (list)
-  expect(html).toContain("/api/invite");
-  expect(html).toContain("/api/allowlist");      // owner-only list, inside loadInvite
-  expect(html).toContain("c.last_error");        // badge driven by last_error
-  expect(html).toContain("delayed");
-  expect(html).not.toContain("onclick=");        // still delegation, no fragile inline handlers
+  expect(html).toContain('href="/admin"');        // owner-only Admin link
+  expect(html).toContain("adminlink");
+  expect(html).toContain("renderInvitePanel");      // non-owner quota panel
+  expect(html).toContain("of 5 invites left");
+  expect(html).not.toContain("/api/allowlist");      // owner allowlist UI lives on /admin now
+  expect(html).not.toContain("loadInvite");
+});
+
+it("dashboard buttons: red Pause with confirm, blue Invite, separated Share, no onclick", async () => {
+  const html = await (await get("/dashboard")).text();
+  expect(html).toContain('class="danger" data-act="pause"'); // red pause
+  expect(html).toContain('confirm("Pause this course?');       // double-check
+  expect(html).toContain('data-act="resume"');                 // resume toggle stays
+  expect(html).toContain('id="invbtn" class="blue"');          // blue invite
+  expect(html).toContain('class="share-group"');               // share visually separated
+  expect(html).not.toContain("onclick=");
 });
 
 import { adminPage } from "../src/pages.mjs";

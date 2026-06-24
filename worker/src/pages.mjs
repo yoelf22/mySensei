@@ -129,7 +129,7 @@ function removeSelected(){
   var emails=[]; for(var i=0;i<boxes.length;i++) emails.push(boxes[i].value);
   Promise.all(emails.map(function(em){
     return fetch("/api/allowlist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});
-  })).then(loadInvite);
+  })).then(loadInvite, loadInvite);
 }
 document.getElementById("users").addEventListener("click",function(e){
   if(e.target.id==="invbtn")invite();

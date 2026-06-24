@@ -5,5 +5,5 @@ export function getCookie(request, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 export function sessionCookie(value) {
-  return `session=${value}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 86400}`;
+  return `session=${encodeURIComponent(value)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 86400}`;
 }

@@ -37,7 +37,7 @@ describe("admin login", () => {
     expect(res.headers.get("Location")).toBe("/admin");
     const cookie = res.headers.get("Set-Cookie") || "";
     expect(cookie).toContain("session=");
-    const token = cookie.split("session=")[1].split(";")[0];
+    const token = decodeURIComponent(cookie.split("session=")[1].split(";")[0]);
     expect(await verifySession(token, "s")).toBe("owner@x.com");
   });
 

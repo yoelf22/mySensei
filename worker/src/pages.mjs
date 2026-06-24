@@ -47,6 +47,16 @@ export function shareUnavailablePage() {
   return SHELL("mySensei", `<h1>Link unavailable</h1><p class="muted">This share link is no longer available — it may have expired or reached its limit.</p>`);
 }
 
+export function adminLoginPage(error) {
+  return SHELL("mySensei — admin sign in", `<h1>Admin sign in</h1>
+${error ? '<p class="muted" style="color:#b4541f">Wrong username or password.</p>' : ""}
+<form method="POST" action="/admin/login">
+<p><input type="text" name="username" placeholder="username" autocomplete="username" required></p>
+<p><input type="password" name="password" placeholder="password" autocomplete="current-password" required></p>
+<p><button type="submit">Sign in</button></p>
+</form>`);
+}
+
 export function dashboardPage() {
   return SHELL("mySensei — my courses", `<h1>My courses</h1><p><button id="new">Start a new course</button></p><div id="list" class="muted">Loading…</div>
 <div id="invite" style="display:none"></div>

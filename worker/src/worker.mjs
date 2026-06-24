@@ -3,11 +3,11 @@ import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countAc
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
-import { signSession, verifySession, mintToken, consumeToken } from "./auth.mjs";
+import { signSession, verifySession, mintToken, consumeToken, sha256Hex, timingSafeEqual } from "./auth.mjs";
 import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch, buildDisputeRecord, postDispatch } from "./dispatch.mjs";
-import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage } from "./pages.mjs";
+import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage, adminLoginPage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
@@ -41,9 +41,28 @@ export default {
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
+    if (method === "GET" && pathname === "/admin/login") {
+      return new Response(adminLoginPage(false), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+    if (method === "POST" && pathname === "/admin/login") {
+      const f = await request.formData();
+      const username = String(f.get("username") || "");
+      const password = String(f.get("password") || "");
+      const okUser = !!env.ADMIN_USERNAME && timingSafeEqual(username, env.ADMIN_USERNAME);
+      const okPass = !!env.ADMIN_PASSWORD_HASH && timingSafeEqual(await sha256Hex(password), env.ADMIN_PASSWORD_HASH);
+      if (!okUser || !okPass) {
+        return new Response(adminLoginPage(true), { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
+      }
+      const cookie = sessionCookie(await signSession(env.OWNER_EMAIL, env.SESSION_SECRET));
+      return new Response(null, { status: 302, headers: { Location: "/admin", "Set-Cookie": cookie } });
+    }
+
     if (method === "POST" && pathname === "/auth/request") {
       let email = "", shareToken = "";
       try { const b = await request.json(); email = String(b.email || "").trim().toLowerCase(); shareToken = String(b.shareToken || ""); } catch {}
+      if (email && email === String(env.OWNER_EMAIL || "").toLowerCase()) {
+        return json({ ok: true }); // the owner signs in at /admin/login, not via magic links
+      }
       if (email) {
         let boundShare = null;
         if (shareToken) {

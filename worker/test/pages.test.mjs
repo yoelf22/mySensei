@@ -75,3 +75,14 @@ it("adminPage renders the chart, summary, course table, and user management", as
   expect(html).toContain('class="blue"');        // blue invite button
   expect(html).not.toContain("onclick=");
 });
+
+it("adminPage: course table has a Lessons column; user list uses checkboxes + Remove selected", async () => {
+  const html = adminPage();
+  expect(html).toContain("<th>Lessons</th>");          // course-list column
+  expect(html).toContain("esc(c.lessons)");             // lessons cell rendered
+  expect(html).toContain('type="checkbox"');            // per-user checkbox
+  expect(html).toContain("Remove selected");            // single bulk-remove button
+  expect(html).toContain("function removeSelected(");   // handler present
+  expect(html).toContain("/api/allowlist/remove");      // bulk remove reuses the endpoint
+  expect(html).not.toContain("onclick=");
+});

@@ -15,8 +15,12 @@ describe("auth", () => {
   });
   it("magic token is single-use and expires", async () => {
     const tok = await mintToken(env, "me@x.com");
-    expect(await consumeToken(env, tok)).toBe("me@x.com");
+    expect(await consumeToken(env, tok)).toEqual({ email: "me@x.com", shareToken: null });
     expect(await consumeToken(env, tok)).toBe(null); // already used
     expect(await consumeToken(env, "bogus")).toBe(null);
+  });
+  it("magic token carries an optional share token", async () => {
+    const tok = await mintToken(env, "a@x.com", "sharetok1");
+    expect(await consumeToken(env, tok)).toEqual({ email: "a@x.com", shareToken: "sharetok1" });
   });
 });

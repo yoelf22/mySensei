@@ -35,18 +35,18 @@ export async function verifySession(token, secret, nowMs = Date.now()) {
   return email;
 }
 
-export async function mintToken(env, email) {
+export async function mintToken(env, email, shareToken = null) {
   const token = randomId(24);
   const expires = new Date(Date.now() + TOKEN_MIN * 60 * 1000).toISOString();
-  await env.DB.prepare("INSERT INTO magic_tokens(token, email, expires_at, used) VALUES(?,?,?,0)")
-    .bind(token, String(email).trim().toLowerCase(), expires).run();
+  await env.DB.prepare("INSERT INTO magic_tokens(token, email, expires_at, used, share_token) VALUES(?,?,?,0,?)")
+    .bind(token, String(email).trim().toLowerCase(), expires, shareToken).run();
   return token;
 }
 
 export async function consumeToken(env, token) {
-  const row = await env.DB.prepare("SELECT email, expires_at FROM magic_tokens WHERE token = ?").bind(token).first();
+  const row = await env.DB.prepare("SELECT email, expires_at, share_token FROM magic_tokens WHERE token = ?").bind(token).first();
   if (!row || row.expires_at < now()) return null;
   const result = await env.DB.prepare("UPDATE magic_tokens SET used = 1 WHERE token = ? AND used = 0").bind(token).run();
   if (result.meta.changes === 0) return null;
-  return row.email;
+  return { email: row.email, shareToken: row.share_token || null };
 }

@@ -60,8 +60,9 @@ export default {
     }
     if (method === "POST" && pathname === "/auth/verify") {
       const form = await request.formData();
-      const email = await consumeToken(env, String(form.get("token") || ""));
-      if (!email) return new Response("This link is invalid or expired. Request a new one.", { status: 400 });
+      const consumed = await consumeToken(env, String(form.get("token") || ""));
+      if (!consumed) return new Response("This link is invalid or expired. Request a new one.", { status: 400 });
+      const { email } = consumed;
       const cookie = sessionCookie(await signSession(email, env.SESSION_SECRET));
       return new Response(null, { status: 302, headers: { Location: "/dashboard", "Set-Cookie": cookie } });
     }

@@ -2,7 +2,7 @@
 import { now, randomId } from "./db.mjs";
 
 const SESSION_DAYS = 30;
-const TOKEN_MIN = 15;
+const TOKEN_DAYS = 7;
 const enc = new TextEncoder();
 
 function b64url(buf) {
@@ -37,7 +37,7 @@ export async function verifySession(token, secret, nowMs = Date.now()) {
 
 export async function mintToken(env, email, shareToken = null) {
   const token = randomId(24);
-  const expires = new Date(Date.now() + TOKEN_MIN * 60 * 1000).toISOString();
+  const expires = new Date(Date.now() + TOKEN_DAYS * 86400 * 1000).toISOString();
   await env.DB.prepare("INSERT INTO magic_tokens(token, email, expires_at, used, share_token) VALUES(?,?,?,0,?)")
     .bind(token, String(email).trim().toLowerCase(), expires, shareToken).run();
   return token;

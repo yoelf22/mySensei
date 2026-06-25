@@ -13,7 +13,7 @@ export async function sendMagicLink(env, email, url) {
       client_payload: {
         to: email,
         subject: "mySensei — your sign-in link",
-        intro: "Click to sign in to your mySensei dashboard. This link expires in 15 minutes.",
+        intro: "Click to sign in to your mySensei dashboard. This link expires in 7 days.",
         url,
       },
     }),

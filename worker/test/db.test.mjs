@@ -1,7 +1,7 @@
 // worker/test/db.test.mjs
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy, createShare, getShare, claimShareUse, adminStats } from "../src/db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, listActiveCourses, addToAllowlist, listAllowlist, removeFromAllowlist, setLastError, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers } from "../src/db.mjs";
 import { courseToCurriculum, saveCurriculum, getPage, putPage } from "../src/db.mjs";
 
 beforeEach(async () => {
@@ -227,6 +227,40 @@ describe("adminStats", () => {
     expect(byTopic.Chess).toBe(3);
     expect(byTopic.Go).toBe(0);
     expect(JSON.stringify(s)).not.toMatch(/@/);
+  });
+});
+
+describe("listUsers", () => {
+  beforeEach(async () => { await env.DB.exec("DELETE FROM courses; DELETE FROM allowlist;"); });
+  async function allow(email) {
+    await env.DB.prepare("INSERT INTO allowlist(email, added_at) VALUES(?, ?)").bind(email, "t").run();
+  }
+  async function course(id, owner, subject, currentModule) {
+    const progress = currentModule == null ? null : JSON.stringify({ currentModule });
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, progress, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
+    ).bind(id, owner, "active", subject, progress, "t", "t").run();
+  }
+
+  it("counts started courses + finished (passed) lessons per allowlisted user", async () => {
+    await allow("a@x.com");
+    await allow("b@x.com");
+    await course("c1", "a@x.com", "Chess", 3); // finished = 2
+    await course("c2", "a@x.com", "Go", 1);     // finished = 0
+    await course("c3", "a@x.com", "", 5);        // no subject → excluded
+    await course("c4", "ghost@x.com", "Ghost", 2); // owner not allowlisted → not listed
+    const users = await listUsers(env);
+    const byEmail = Object.fromEntries(users.map((u) => [u.email, u]));
+    expect(byEmail["a@x.com"]).toEqual({ email: "a@x.com", courses: 2, lessons: 2 });
+    expect(byEmail["b@x.com"]).toEqual({ email: "b@x.com", courses: 0, lessons: 0 });
+    expect(users.length).toBe(2); // only allowlisted emails
+  });
+
+  it("treats a course with no/malformed progress as 0 finished", async () => {
+    await allow("a@x.com");
+    await course("c1", "a@x.com", "Chess", null);
+    const users = await listUsers(env);
+    expect(users[0]).toEqual({ email: "a@x.com", courses: 1, lessons: 0 });
   });
 });
 

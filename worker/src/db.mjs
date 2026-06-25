@@ -184,6 +184,29 @@ export async function claimShareUse(env, token) {
   return res.meta.changes === 1;
 }
 
+export async function listUsers(env) {
+  const emails = await listAllowlist(env);
+  const { results } = await env.DB.prepare(
+    "SELECT owner_email, subject, progress FROM courses WHERE subject IS NOT NULL AND subject != ''",
+  ).all();
+  const agg = {};
+  for (const r of results) {
+    const e = norm(r.owner_email);
+    let finished = 0;
+    try {
+      const p = r.progress ? JSON.parse(r.progress) : null;
+      finished = Math.max(0, ((p && p.currentModule) || 1) - 1);
+    } catch { /* malformed progress → 0 */ }
+    const a = agg[e] || (agg[e] = { courses: 0, lessons: 0 });
+    a.courses += 1;
+    a.lessons += finished;
+  }
+  return emails.map((email) => {
+    const a = agg[norm(email)] || { courses: 0, lessons: 0 };
+    return { email, courses: a.courses, lessons: a.lessons };
+  });
+}
+
 export async function adminStats(env) {
   const { results } = await env.DB.prepare(
     "SELECT subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",

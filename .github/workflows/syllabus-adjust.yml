@@ -1,21 +1,14 @@
-name: build-curriculum
-
-# Triggered when the learner submits the placement check (via the worker).
-# Claude judges the level, builds the outline (chunk-size ladder), then sends
-# the syllabus and the first lesson.
+name: syllabus-adjust
 on:
   repository_dispatch:
-    types: [assessment-result]
-
+    types: [syllabus-adjust]
 permissions:
   contents: read
-
 concurrency:
-  group: mysensei-build
+  group: mysensei-build-${{ github.event.client_payload.courseId }}
   cancel-in-progress: false
-
 jobs:
-  build:
+  adjust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,16 +17,16 @@ jobs:
           node-version: "20"
       - run: npm install --no-audit --no-fund
 
-      - name: Judge level + build curriculum
+      - name: Re-pitch the curriculum one band
         env:
-          ASSESSMENT_RESULTS: ${{ toJSON(github.event.client_payload.results) }}
+          LEVEL_ADJUST: ${{ github.event.client_payload.direction }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           COURSE_ID: ${{ github.event.client_payload.courseId }}
           APP_BASE_URL: ${{ vars.APP_BASE_URL }}
           INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
         run: node scripts/build-curriculum.mjs
 
-      - name: Email the syllabus (with approve button)
+      - name: Email the updated syllabus
         env:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_FROM: ${{ vars.MAIL_FROM }}

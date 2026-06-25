@@ -8,13 +8,19 @@ export function buildDispatch(body) {
     if (!body.subject) return { error: "missing subject" };
     // GitHub caps client_payload at 10 top-level properties, so the course
     // settings are nested under one `settings` key (keeps it to 4 top-level).
-    return { event_type: "onboard", client_payload: { courseId, subject: body.subject, angle: body.angle || "", settings: { language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", chunkMinutes: Number(body.chunkMinutes) || 10, cadence: body.cadence === "weekly" ? "weekly" : "daily", deliveryTime: body.deliveryTime || "07:00", timezone: body.timezone || "UTC", workweekDays: Array.isArray(body.workweekDays) ? body.workweekDays : [0,1,2,3,4,5,6] } } };
+    return { event_type: "onboard", client_payload: { courseId, subject: body.subject, angle: body.angle || "", settings: { language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", domain: body.domain || "other", chunkMinutes: Number(body.chunkMinutes) || 10, cadence: body.cadence === "weekly" ? "weekly" : "daily", deliveryTime: body.deliveryTime || "07:00", timezone: body.timezone || "UTC", workweekDays: Array.isArray(body.workweekDays) ? body.workweekDays : [0,1,2,3,4,5,6] } } };
   }
   if (type === "assessment") {
     if (!Array.isArray(body.results) || !body.results.length) return { error: "missing results" };
     return { event_type: "assessment-result", client_payload: { courseId, results: body.results.map((r) => ({ level: Number(r.level), correct: !!r.correct })) } };
   }
   if (type === "approve") return { event_type: "syllabus-approved", client_payload: { courseId } };
+
+  if (type === "adjust") {
+    const direction = body.direction === "up" ? "up" : body.direction === "down" ? "down" : "";
+    if (!direction) return { error: "invalid direction" };
+    return { event_type: "syllabus-adjust", client_payload: { courseId, direction } };
+  }
 
   const module = Number(body.module), attempt = Number(body.attempt) || 1, score = Number(body.score), total = Number(body.total);
   if (![module, score, total].every(Number.isInteger) || total <= 0 || score < 0 || score > total) return { error: "invalid result" };

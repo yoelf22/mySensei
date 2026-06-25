@@ -44,3 +44,22 @@ it("onboard defaults educationLevel to undergraduate when absent", async () => {
   const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
   expect(body.client_payload.settings.educationLevel).toBe("undergraduate");
 });
+
+import { buildDispatch as bd2 } from "../src/dispatch.mjs";
+
+describe("calibration dispatch", () => {
+  it("onboard carries the domain in settings", () => {
+    const d = bd2({ type: "onboard", courseId: "c1", subject: "Chess", domain: "arts-humanities" });
+    expect(d.client_payload.settings.domain).toBe("arts-humanities");
+  });
+  it("onboard defaults domain to other", () => {
+    const d = bd2({ type: "onboard", courseId: "c1", subject: "Chess" });
+    expect(d.client_payload.settings.domain).toBe("other");
+  });
+  it("adjust validates direction and maps to syllabus-adjust", () => {
+    const up = bd2({ type: "adjust", courseId: "c1", direction: "up" });
+    expect(up.event_type).toBe("syllabus-adjust");
+    expect(up.client_payload).toEqual({ courseId: "c1", direction: "up" });
+    expect(bd2({ type: "adjust", courseId: "c1", direction: "sideways" }).error).toBeTruthy();
+  });
+});

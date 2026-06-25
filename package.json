@@ -6,6 +6,7 @@
   "description": "Personal tutor that drips browser-readable lessons to your inbox on a cadence.",
   "scripts": {
     "generate": "node scripts/generate-lesson.mjs",
+    "approve": "node scripts/approve-syllabus.mjs",
     "send": "node scripts/send-email.mjs",
     "record": "node scripts/record-quiz.mjs",
     "adjudicate": "node scripts/adjudicate-dispute.mjs",

@@ -107,8 +107,8 @@ function loadStats(){
 }
 function loadInvite(){
   var box=document.getElementById("users");
-  fetch("/api/allowlist").then(function(r){return r.ok?r.json():{emails:[]};}).then(function(d){
-    var rows=(d.emails||[]).map(function(e){return '<li><span>'+esc(e)+'</span><input type="checkbox" class="usel" value="'+esc(e)+'"></li>';}).join("");
+  fetch("/api/admin/users").then(function(r){return r.ok?r.json():{users:[]};}).then(function(d){
+    var rows=(d.users||[]).map(function(u){return '<li><span>'+esc(u.email)+' <span class="muted">'+esc(u.courses)+' courses \xb7 '+esc(u.lessons)+' finished</span></span><input type="checkbox" class="usel" value="'+esc(u.email)+'"></li>';}).join("");
     box.innerHTML='<h2>Users</h2><p><input id="invemail" type="email" placeholder="friend@example.com"> <button id="invbtn" class="blue">Invite</button></p><p id="invmsg" class="muted"></p><ul class="allow">'+rows+'</ul><p><button id="rmsel">Remove selected</button></p>';
   });
 }

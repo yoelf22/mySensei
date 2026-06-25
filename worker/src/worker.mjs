@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -174,6 +174,14 @@ export default {
       if (!email) return json({ error: "unauthorized" }, 401);
       if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
       if (method === "GET") return json(await adminStats(env));
+      return json({ error: "method not allowed" }, 405);
+    }
+
+    if (pathname === "/api/admin/users") {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      if (!isOwner(email, env)) return json({ error: "forbidden" }, 403);
+      if (method === "GET") return json({ users: await listUsers(env) });
       return json({ error: "method not allowed" }, 405);
     }
 

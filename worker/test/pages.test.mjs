@@ -76,6 +76,15 @@ it("adminPage renders the chart, summary, course table, and user management", as
   expect(html).not.toContain("onclick=");
 });
 
+it("adminPage user list fetches /api/admin/users and shows per-user counts", async () => {
+  const html = adminPage();
+  expect(html).toContain("/api/admin/users");   // user list now reads the enriched feed
+  expect(html).toContain("esc(u.courses)");       // courses count rendered
+  expect(html).toContain("esc(u.lessons)");       // finished count rendered
+  expect(html).toContain("finished");
+  expect(html).not.toContain("onclick=");
+});
+
 it("adminPage: course table has a Lessons column; user list uses checkboxes + Remove selected", async () => {
   const html = adminPage();
   expect(html).toContain("<th>Lessons</th>");          // course-list column

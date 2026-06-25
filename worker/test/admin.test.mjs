@@ -73,6 +73,14 @@ describe("/admin page + stats feed", () => {
   });
 });
 
+describe("/api/admin/users", () => {
+  it("is owner-only", async () => {
+    expect((await call("/api/admin/users", { headers: await ownerCookie() })).status).toBe(200);
+    expect((await call("/api/admin/users", { headers: await otherCookie() })).status).toBe(403);
+    expect((await call("/api/admin/users", {})).status).toBe(401);
+  });
+});
+
 describe("owner is refused on the magic-link path", () => {
   it("/auth/request with the owner email sends no link", async () => {
     const res = await call("/auth/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "owner@x.com" }) });

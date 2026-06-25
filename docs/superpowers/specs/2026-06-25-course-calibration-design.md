@@ -115,16 +115,36 @@ adjusting:
   syllabus email (reuse `send-syllabus.mjs`) so the learner gets the updated
   link; status stays `awaiting-approval`.
 
+### 6. Approval becomes a real gate (flow change)
+
+Today `build-curriculum` sets `status="active"` and the workflow generates +
+sends lesson 1 immediately, so the syllabus "approve" is cosmetic. To make
+"calibrate before diving in" real:
+
+- **`build-curriculum.mjs`** sets `progress.status = "awaiting-approval"` (not
+  `active`), and the **`build-curriculum.yml` workflow drops the "Generate first
+  lesson" step** — only the syllabus email goes out at build time. (The
+  `syllabus-adjust` workflow likewise only rebuilds + re-emails the syllabus, no
+  lesson.)
+- **On approve** (`syllabus-approved` → `start-lessons.yml`): a small new
+  `scripts/approve-syllabus.mjs` flips `awaiting-approval` → `active`; then the
+  workflow generates lesson 1 (`npm run generate` with `MYSENSEI_FORCE=1`) and
+  sends it (`npm run send`). So the first lesson is generated only after the
+  learner approves the (possibly re-pitched) syllabus.
+- Approving a course not in `awaiting-approval` is a no-op (idempotent).
+
 ## Data flow
 
 1. Onboarding → `settings.domain` stored with the course.
 2. Assessment → `build-curriculum` judges level, builds outline + syllabus with
    `prerequisites` + `level` label (calibrated by domain), status
-   `awaiting-approval`, emails the syllabus link.
+   `awaiting-approval`, emails the syllabus link. **No lesson yet.**
 3. Learner opens the syllabus → sees level + prerequisites → either **approves**
-   (→ lessons begin, as today) or picks **more advanced / introductory**.
+   (→ status `active`, lesson 1 generated + sent) or picks **more advanced /
+   introductory**.
 4. Adjust → `syllabus-adjust` workflow → `build-curriculum` rebuilds at the
-   band-shifted level → re-sends the updated syllabus → back to step 3.
+   band-shifted level → re-sends the updated syllabus (still
+   `awaiting-approval`) → back to step 3.
 
 ## Error handling
 

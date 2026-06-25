@@ -1,8 +1,8 @@
 // Triggered by the "assessment-result" repository_dispatch. Has Claude judge the
 // learner's level from the answer pattern, builds the outline with the chunk-size
-// ladder, and writes the full curriculum to D1 (status active).
+// ladder, and writes the full curriculum to D1 (status awaiting-approval; approval activates and generates lesson 1).
 //
-// Env: ASSESSMENT_RESULTS (JSON [{level, correct}]), ANTHROPIC_API_KEY, COURSE_ID
+// Env: ASSESSMENT_RESULTS (JSON [{level, correct}]), LEVEL_ADJUST (up|down, optional), ANTHROPIC_API_KEY, COURSE_ID
 
 import { client, structured } from "../lib/claude.mjs";
 import { buildLadder, placementLevel } from "../lib/ladder.mjs";

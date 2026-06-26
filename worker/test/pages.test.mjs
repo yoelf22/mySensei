@@ -65,6 +65,13 @@ it("dashboard buttons: red Pause with confirm, blue Invite, separated Share, no 
   expect(html).not.toContain("onclick=");
 });
 
+it("dashboard: research projects open at /project and are labelled 'research'", async () => {
+  const html = await (await get("/dashboard")).text();
+  expect(html).toContain('kind==="research"');      // openHref branches on kind
+  expect(html).toContain('"/project"');             // research target in openHref
+  expect(html).toContain("research \xb7 ");         // kind label prepended to muted status line
+});
+
 import { adminPage } from "../src/pages.mjs";
 it("adminPage renders the chart, summary, course table, and user management", async () => {
   const html = adminPage();

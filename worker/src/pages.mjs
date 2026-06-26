@@ -161,6 +161,7 @@ export function dashboardPage() {
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
 function openHref(c){
   var id=encodeURIComponent(c.id);
+  if(c.kind==="research")return "/c/"+id+"/project";
   if(c.status==="draft")return "/c/"+id+"/onboard";
   if(c.status==="awaiting-assessment")return "/c/"+id+"/assessment";
   if(c.status==="awaiting-approval")return "/c/"+id+"/syllabus";
@@ -194,13 +195,14 @@ function load(){fetch("/api/courses").then(function(r){if(r.status===401){locati
   if(!d.courses.length){el.textContent="No courses yet — start one.";return;}
   el.innerHTML=d.courses.map(function(c){
     var prog=c.progress?("module "+esc(c.progress.currentModule)):"";
+    var typ=c.kind==="research"?"research \xb7 ":"";
     var btn="";
     if(c.status==="paused")btn='<button data-act="resume" data-id="'+esc(c.id)+'">Resume</button>';
     if(c.status==="active")btn='<button class="danger" data-act="pause" data-id="'+esc(c.id)+'">Pause</button>';
     var badge=c.last_error?' <span class="badge">⚠ delayed</span>':'';
     var open='<a class="open" href="'+esc(openHref(c))+'">Open</a>';
     var shareBtn=c.subject?'<span class="share-group"><button data-share="'+esc(c.id)+'">Share</button> <span class="muted" data-sb="'+esc(c.id)+'"></span></span>':'';
-    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p class="actions">'+open+btn+shareBtn+'</p></div>';
+    return '<div class="c"><b>'+esc(c.subject||"(new course)")+'</b>'+badge+'<div class="muted">'+typ+esc(c.status)+" \xb7 level "+esc(c.level||"?")+" \xb7 "+prog+'</div><p class="actions">'+open+btn+shareBtn+'</p></div>';
   }).join("");
 });}
 function act(id,what){

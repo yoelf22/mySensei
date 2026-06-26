@@ -10,6 +10,7 @@ export default defineWorkersConfig({
         wrangler: { configPath: "./wrangler.toml" },
         miniflare: {
           d1Databases: ["DB"],
+          r2Buckets: ["DOCS"],
           bindings: { TEST_MIGRATIONS: migrations },
         },
       },

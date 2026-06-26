@@ -1,0 +1,42 @@
+name: dialogue
+
+on:
+  repository_dispatch:
+    types: [dialogue]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-${{ github.event.client_payload.courseId }}
+  cancel-in-progress: false
+
+jobs:
+  dialogue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+
+      - name: Reply to dialogue
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          STAGE: ${{ github.event.client_payload.stage }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+        run: node scripts/reply-dialogue.mjs
+
+      - name: Report failure
+        if: failure()
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+        run: node scripts/report-failure.mjs

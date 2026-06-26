@@ -46,12 +46,12 @@ export async function setLastError(env, id, msg) {
   await env.DB.prepare("UPDATE courses SET last_error = ?, updated_at = ? WHERE id = ?").bind(msg || null, now(), id).run();
 }
 
-export async function createCourse(env, ownerEmail, subject = null, angle = null) {
+export async function createCourse(env, ownerEmail, subject = null, angle = null, kind = "course") {
   const id = randomId();
   const t = now();
   await env.DB.prepare(
-    "INSERT INTO courses(id, owner_email, status, subject, angle, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
-  ).bind(id, norm(ownerEmail), "draft", subject, angle, t, t).run();
+    "INSERT INTO courses(id, owner_email, status, subject, angle, kind, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)",
+  ).bind(id, norm(ownerEmail), "draft", subject, angle, kind, t, t).run();
   return { id };
 }
 
@@ -134,6 +134,33 @@ export async function putPage(env, courseId, path, html) {
     `INSERT INTO pages(course_id, path, html, updated_at) VALUES(?,?,?,?)
        ON CONFLICT(course_id, path) DO UPDATE SET html=excluded.html, updated_at=excluded.updated_at`,
   ).bind(courseId, path, html, now()).run();
+}
+
+export async function setKind(env, id, kind) {
+  await env.DB.prepare("UPDATE courses SET kind = ?, updated_at = ? WHERE id = ?").bind(kind, now(), id).run();
+}
+
+export async function addArtifact(env, { projectId, stage, type, version = null, role = null, content, citations = null }) {
+  const id = randomId();
+  await env.DB.prepare(
+    "INSERT INTO research_artifacts(id, project_id, stage, type, version, role, content, citations, created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+  ).bind(id, projectId, stage, type, version, role, content ?? "", citations ? JSON.stringify(citations) : null, now()).run();
+  return { id };
+}
+
+export async function latestDocument(env, projectId, type) {
+  const row = await env.DB.prepare(
+    "SELECT id, version, content, citations FROM research_artifacts WHERE project_id=? AND type=? ORDER BY version DESC LIMIT 1",
+  ).bind(projectId, type).first();
+  if (!row) return null;
+  return { id: row.id, version: row.version, content: row.content, citations: row.citations ? JSON.parse(row.citations) : [] };
+}
+
+export async function listThread(env, projectId, stage) {
+  const { results } = await env.DB.prepare(
+    "SELECT role, content, created_at FROM research_artifacts WHERE project_id=? AND stage=? AND type='message' ORDER BY created_at ASC",
+  ).bind(projectId, stage).all();
+  return results;
 }
 
 export async function createDispute(env, { courseId, module, attempt, questionIndex, payload }) {

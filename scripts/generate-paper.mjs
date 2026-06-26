@@ -17,9 +17,10 @@ async function main() {
   const subject = proj.course.subject || "";
   const settings = proj.course.settings || {};
   const planText = proj.course.planDoc || "";
+  const thread = proj.draftThread || [];
 
   const c = heavyClient();
-  const outline = await structured(c, outlinePrompt({ planText, settings }), PAPER_OUTLINE_SCHEMA, 4000);
+  const outline = await structured(c, outlinePrompt({ planText, settings, thread }), PAPER_OUTLINE_SCHEMA, 4000, HEAVY_MODEL);
 
   const sections = [];
   const references = [];
@@ -27,12 +28,12 @@ async function main() {
   const collect = (sources) => { for (const s of sources) if (!seen.has(s.url)) { seen.add(s.url); references.push(s); } };
   let priorText = "";
   for (const heading of outline.headings || []) {
-    const { text, sources } = await researchWithSources(c, sectionPrompt({ subject, settings, planText, heading, priorText }), { model: HEAVY_MODEL });
+    const { text, sources } = await researchWithSources(c, sectionPrompt({ subject, settings, planText, heading, priorText, thread }), { model: HEAVY_MODEL });
     sections.push({ heading, body: text });
     collect(sources);
     priorText += `\n\n${heading}\n${text}`;
   }
-  const { text: conclusion, sources: concSources } = await researchWithSources(c, conclusionPrompt({ subject, settings, planText, bodyText: priorText }), { model: HEAVY_MODEL });
+  const { text: conclusion, sources: concSources } = await researchWithSources(c, conclusionPrompt({ subject, settings, planText, bodyText: priorText, thread }), { model: HEAVY_MODEL });
   collect(concSources);
 
   const paper = { title: outline.title || subject, subtitle: outline.subtitle || "", abstract: outline.abstract || "", sections, conclusion };

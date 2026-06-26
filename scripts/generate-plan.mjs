@@ -22,7 +22,7 @@ async function main() {
 
   const c = client();
   const { text: notes } = await researchWithSources(c, `Research "${subject}"${angle ? ` (angle: ${angle})` : ""}. Summarize what bears on the thesis and credible source venues. Keep it tight.`, { model: HEAVY_MODEL });
-  const plan = await structured(heavyClient(), planPrompt({ subject, angle, settings, thread, notes }), PLAN_SCHEMA, 6000);
+  const plan = await structured(heavyClient(), planPrompt({ subject, angle, settings, thread, notes }), PLAN_SCHEMA, 6000, HEAVY_MODEL);
 
   const version = (proj.course.planVersion || 0) + 1;
   await addArtifact(COURSE_ID, { stage: "plan", type: "plan", version, content: planToText(plan), citations: [] });

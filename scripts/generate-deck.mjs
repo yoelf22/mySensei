@@ -2,7 +2,7 @@
 // Builds a slide deck from the locked paper: a .pptx (stored in R2) and a
 // browser deck page, sets status deck-ready, re-renders the project page.
 // Env: COURSE_ID, ANTHROPIC_API_KEY, APP_BASE_URL, INTERNAL_TOKEN
-import { heavyClient, structured } from "../lib/claude.mjs";
+import { heavyClient, HEAVY_MODEL, structured } from "../lib/claude.mjs";
 import { DECK_SCHEMA, deckPrompt } from "../lib/deck-model.mjs";
 import { deckToPptx } from "../lib/deck-pptx.mjs";
 import { renderDeckHtml } from "../lib/render-deck.mjs";
@@ -19,7 +19,7 @@ async function main() {
   const paperText = proj.course.draftDoc || "";
   if (!paperText) { console.error("no paper to present (draftDoc missing)"); process.exit(1); }
 
-  const deck = await structured(heavyClient(), deckPrompt({ paperText, settings }), DECK_SCHEMA, 6000);
+  const deck = await structured(heavyClient(), deckPrompt({ paperText, settings }), DECK_SCHEMA, 6000, HEAVY_MODEL);
   const slides = deck.slides || [];
 
   const pptx = await deckToPptx({ slides });

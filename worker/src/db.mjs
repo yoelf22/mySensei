@@ -46,12 +46,12 @@ export async function setLastError(env, id, msg) {
   await env.DB.prepare("UPDATE courses SET last_error = ?, updated_at = ? WHERE id = ?").bind(msg || null, now(), id).run();
 }
 
-export async function createCourse(env, ownerEmail, subject = null, angle = null) {
+export async function createCourse(env, ownerEmail, subject = null, angle = null, kind = "course") {
   const id = randomId();
   const t = now();
   await env.DB.prepare(
-    "INSERT INTO courses(id, owner_email, status, subject, angle, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
-  ).bind(id, norm(ownerEmail), "draft", subject, angle, t, t).run();
+    "INSERT INTO courses(id, owner_email, status, subject, angle, kind, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)",
+  ).bind(id, norm(ownerEmail), "draft", subject, angle, kind, t, t).run();
   return { id };
 }
 
@@ -114,10 +114,10 @@ export async function saveCurriculum(env, id, c) {
   const assessmentCol = JSON.stringify({ ...(c.assessment || {}), placement: c.placement ?? null });
   const status = (c.progress && c.progress.status) || "draft";
   await env.DB.prepare(
-    `UPDATE courses SET subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
+    `UPDATE courses SET kind=COALESCE(?, kind), subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
        research=?, assessment=?, outline=?, progress=?, syllabus=?, last_error=NULL, updated_at=? WHERE id=?`,
   ).bind(
-    c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
+    c.kind ?? null, c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
     c.startLevel ?? null, c.level ?? null, c.researchContext || "",
     assessmentCol, JSON.stringify(c.outline || []), JSON.stringify(c.progress || null),
     JSON.stringify(c.syllabus ?? null), now(), id,
@@ -134,6 +134,33 @@ export async function putPage(env, courseId, path, html) {
     `INSERT INTO pages(course_id, path, html, updated_at) VALUES(?,?,?,?)
        ON CONFLICT(course_id, path) DO UPDATE SET html=excluded.html, updated_at=excluded.updated_at`,
   ).bind(courseId, path, html, now()).run();
+}
+
+export async function setKind(env, id, kind) {
+  await env.DB.prepare("UPDATE courses SET kind = ?, updated_at = ? WHERE id = ?").bind(kind, now(), id).run();
+}
+
+export async function addArtifact(env, { projectId, stage, type, version = null, role = null, content, citations = null }) {
+  const id = randomId();
+  await env.DB.prepare(
+    "INSERT INTO research_artifacts(id, project_id, stage, type, version, role, content, citations, created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+  ).bind(id, projectId, stage, type, version, role, content ?? "", citations ? JSON.stringify(citations) : null, now()).run();
+  return { id };
+}
+
+export async function latestDocument(env, projectId, type) {
+  const row = await env.DB.prepare(
+    "SELECT id, version, content, citations FROM research_artifacts WHERE project_id=? AND type=? ORDER BY version DESC LIMIT 1",
+  ).bind(projectId, type).first();
+  if (!row) return null;
+  return { id: row.id, version: row.version, content: row.content, citations: row.citations ? JSON.parse(row.citations) : [] };
+}
+
+export async function listThread(env, projectId, stage) {
+  const { results } = await env.DB.prepare(
+    "SELECT role, content, created_at FROM research_artifacts WHERE project_id=? AND stage=? AND type='message' ORDER BY created_at ASC",
+  ).bind(projectId, stage).all();
+  return results;
 }
 
 export async function createDispute(env, { courseId, module, attempt, questionIndex, payload }) {
@@ -209,7 +236,7 @@ export async function listUsers(env) {
 
 export async function adminStats(env) {
   const { results } = await env.DB.prepare(
-    "SELECT subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
+    "SELECT owner_email, subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
   ).all();
   const courses = results.map((r) => {
     let lessons = 0;
@@ -220,15 +247,41 @@ export async function adminStats(env) {
     return { topic: r.subject, status: r.status, startedAt: r.created_at, lessons };
   });
 
-  const byDay = new Map();
+  // Daily increments for three metrics, keyed by YYYY-MM-DD.
+  const coursesByDay = new Map(); // a course's start day
+  const lessonsByDay = new Map(); // each delivered lesson's sentAt day
+  const firstSeen = new Map();    // owner_email → earliest day they appear
   for (const r of results) {
     const day = String(r.created_at).slice(0, 10);
-    byDay.set(day, (byDay.get(day) || 0) + 1);
+    coursesByDay.set(day, (coursesByDay.get(day) || 0) + 1);
+
+    const owner = norm(r.owner_email);
+    if (owner) {
+      const prev = firstSeen.get(owner);
+      if (!prev || day < prev) firstSeen.set(owner, day);
+    }
+
+    try {
+      const p = r.progress ? JSON.parse(r.progress) : null;
+      if (p && Array.isArray(p.delivered)) {
+        for (const d of p.delivered) {
+          const lday = String(d && d.sentAt ? d.sentAt : r.created_at).slice(0, 10);
+          lessonsByDay.set(lday, (lessonsByDay.get(lday) || 0) + 1);
+        }
+      }
+    } catch { /* malformed progress → skip its lessons */ }
   }
-  let running = 0;
-  const series = [...byDay.keys()].sort().map((date) => {
-    running += byDay.get(date);
-    return { date, total: running };
+  // New distinct users per day, from each owner's first-seen day.
+  const usersByDay = new Map();
+  for (const day of firstSeen.values()) usersByDay.set(day, (usersByDay.get(day) || 0) + 1);
+
+  const days = [...new Set([...coursesByDay.keys(), ...usersByDay.keys(), ...lessonsByDay.keys()])].sort();
+  let runUsers = 0, runCourses = 0, runLessons = 0;
+  const series = days.map((date) => {
+    runUsers += usersByDay.get(date) || 0;
+    runCourses += coursesByDay.get(date) || 0;
+    runLessons += lessonsByDay.get(date) || 0;
+    return { date, users: runUsers, courses: runCourses, lessons: runLessons };
   });
 
   const summary = {

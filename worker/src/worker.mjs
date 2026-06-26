@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers, addArtifact } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -197,6 +197,15 @@ export default {
         if (!gh2.ok) return json({ error: "dispatch failed", status: gh2.status }, 502, CORS);
         return json({ ok: true }, 200, CORS);
       }
+      if (body.type === "dialogue") {
+        const stage = body.stage === "draft" ? "draft" : "plan";
+        const text = String(body.text || "").trim();
+        if (!text) return json({ error: "empty message" }, 400, CORS);
+        await addArtifact(env, { projectId: String(body.courseId), stage, type: "message", role: "user", content: text });
+      }
+      if (body.type === "lock") {
+        await setStatus(env, String(body.courseId), body.stage === "draft" ? "finalizing" : "drafting");
+      }
       const d = buildDispatch(body);
       if (d.error) return json({ error: d.error }, 400, CORS);
       const gh = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/dispatches`, {
@@ -237,6 +246,18 @@ export default {
       const row = await getCourse(env, cm[1]);
       if (!row) return new Response("not found", { status: 404 });
       return html(renderCourseIndexHtml({ curriculum: courseToCurriculum(row), courseId: cm[1] }));
+    }
+
+    const dlm = pathname.match(/^\/c\/([a-z0-9]+)\/download\/(pdf|docx|pptx)$/);
+    if (method === "GET" && dlm) {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      const course = await getCourse(env, dlm[1]);
+      if (!course || course.owner_email !== email) return new Response("not found", { status: 404 });
+      const obj = await env.DOCS.get(`${dlm[1]}/${dlm[2]}`);
+      if (!obj) return new Response("not ready", { status: 404 });
+      const TYPES = { pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation" };
+      return new Response(obj.body, { headers: { "Content-Type": TYPES[dlm[2]], "Content-Disposition": `attachment; filename="paper.${dlm[2]}"` } });
     }
 
     const pm = pathname.match(/^\/c\/([a-z0-9]+)\/(.+)$/);

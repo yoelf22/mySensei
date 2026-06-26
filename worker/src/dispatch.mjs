@@ -5,6 +5,10 @@ export function buildDispatch(body) {
   if (!courseId) return { error: "missing courseId" };
 
   if (type === "onboard") {
+    if (body.kind === "research") {
+      if (!body.subject) return { error: "missing subject" };
+      return { event_type: "plan-due", client_payload: { courseId, subject: body.subject, angle: body.angle || "", settings: { language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", domain: body.domain || "other" } } };
+    }
     if (!body.subject) return { error: "missing subject" };
     // GitHub caps client_payload at 10 top-level properties, so the course
     // settings are nested under one `settings` key (keeps it to 4 top-level).
@@ -21,6 +25,11 @@ export function buildDispatch(body) {
     if (!direction) return { error: "invalid direction" };
     return { event_type: "syllabus-adjust", client_payload: { courseId, direction } };
   }
+
+  if (type === "dialogue") return { event_type: "dialogue", client_payload: { courseId, stage: body.stage === "draft" ? "draft" : "plan" } };
+  if (type === "regenerate") return { event_type: body.stage === "draft" ? "paper-due" : "plan-due", client_payload: { courseId } };
+  if (type === "lock") return { event_type: body.stage === "draft" ? "finalize-due" : "paper-due", client_payload: { courseId } };
+  if (type === "deck") return { event_type: "deck-due", client_payload: { courseId } };
 
   const module = Number(body.module), attempt = Number(body.attempt) || 1, score = Number(body.score), total = Number(body.total);
   if (![module, score, total].every(Number.isInteger) || total <= 0 || score < 0 || score > total) return { error: "invalid result" };

@@ -13,7 +13,7 @@ async function call(path, init) {
 }
 const auth = { Authorization: "Bearer " + TOKEN, "Content-Type": "application/json" };
 
-beforeEach(async () => { await env.DB.exec("DELETE FROM courses; DELETE FROM pages;"); });
+beforeEach(async () => { await env.DB.exec("DELETE FROM courses; DELETE FROM pages; DELETE FROM research_artifacts;"); });
 
 describe("internal API", () => {
   it("rejects a missing/bad token with 401", async () => {
@@ -58,5 +58,33 @@ describe("internal API", () => {
   it("rejects /error without the bearer token", async () => {
     const { id } = await createCourse(env, "me@x.com");
     expect((await call(`/internal/course/${id}/error`, { method: "PUT", body: "{}" })).status).toBe(401);
+  });
+});
+
+describe("internal project API", () => {
+  it("rejects without the internal token", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    expect((await call(`/internal/project/${id}`, {})).status).toBe(401);
+  });
+
+  it("appends an artifact then returns it in the project payload", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    const post = await call(`/internal/project/${id}/artifact`, {
+      method: "POST", headers: auth,
+      body: JSON.stringify({ stage: "plan", type: "message", role: "user", content: "hi" }),
+    });
+    expect(post.status).toBe(200);
+    const get = await call(`/internal/project/${id}`, { headers: auth });
+    const payload = await get.json();
+    expect(payload.course.kind).toBe("research");
+    expect(payload.planThread[0].content).toBe("hi");
+  });
+
+  it("fresh research project has planVersion 0 and empty planDoc", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    const res = await call(`/internal/project/${id}`, { headers: auth });
+    const payload = await res.json();
+    expect(payload.course.planVersion).toBe(0);
+    expect(payload.course.planDoc).toBe("");
   });
 });

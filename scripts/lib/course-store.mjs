@@ -70,3 +70,30 @@ export async function resolveDispute(disputeId, { status, ruling }) {
   });
   if (!r.ok) throw new Error(`resolveDispute ${disputeId}: ${r.status}`);
 }
+
+export async function fetchProject(projectId) {
+  const r = await fetch(`${base()}/internal/project/${projectId}`, {
+    headers: { Authorization: `Bearer ${token()}` },
+  });
+  if (!r.ok) throw new Error(`fetchProject ${projectId}: ${r.status}`);
+  return r.json();
+}
+
+export async function putFile(projectId, fmt, buffer, contentType) {
+  const r = await fetch(`${base()}/internal/project/${projectId}/file/${fmt}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token()}`, "Content-Type": contentType },
+    body: buffer,
+  });
+  if (!r.ok) throw new Error(`putFile ${projectId}/${fmt}: ${r.status}`);
+}
+
+export async function addArtifact(projectId, artifact) {
+  const r = await fetch(`${base()}/internal/project/${projectId}/artifact`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(artifact),
+  });
+  if (!r.ok) throw new Error(`addArtifact ${projectId}: ${r.status}`);
+  return r.json();
+}

@@ -1,0 +1,53 @@
+name: deck
+
+on:
+  repository_dispatch:
+    types: [deck-due]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-${{ github.event.client_payload.courseId }}
+  cancel-in-progress: false
+
+jobs:
+  deck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+
+      - name: Build the deck
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          MYSENSEI_HEAVY_MODEL: ${{ vars.MYSENSEI_HEAVY_MODEL }}
+        run: node scripts/generate-deck.mjs
+
+      - name: Notify
+        if: success()
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+        run: node scripts/notify-ready.mjs presentation
+
+      - name: Report failure
+        if: failure()
+        env:
+          COURSE_ID: ${{ github.event.client_payload.courseId }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+        run: node scripts/report-failure.mjs

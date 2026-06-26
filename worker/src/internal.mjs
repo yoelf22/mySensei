@@ -28,6 +28,15 @@ export async function handleInternal(request, env, url) {
     return json({ error: "method not allowed" }, 405);
   }
 
+  const pfm = url.pathname.match(/^\/internal\/project\/([a-z0-9]+)\/file\/(pdf|docx|pptx)$/);
+  if (pfm) {
+    if (!internalOk(request, env)) return json({ error: "unauthorized" }, 401);
+    if (request.method !== "PUT") return json({ error: "method not allowed" }, 405);
+    const ct = request.headers.get("Content-Type") || "application/octet-stream";
+    await env.DOCS.put(`${pfm[1]}/${pfm[2]}`, await request.arrayBuffer(), { httpMetadata: { contentType: ct } });
+    return json({ ok: true });
+  }
+
   const pm = url.pathname.match(/^\/internal\/project\/([a-z0-9]+)(\/artifact)?$/);
   if (pm) {
     if (!internalOk(request, env)) return json({ error: "unauthorized" }, 401);
@@ -47,9 +56,10 @@ export async function handleInternal(request, env, url) {
     if (request.method === "GET") {
       const row = await getCourse(env, pid);
       if (!row) return json({ error: "not found" }, 404);
-      const [planDoc, draftDoc] = await Promise.all([
+      const [planDoc, draftDoc, draftJsonDoc] = await Promise.all([
         latestDocument(env, pid, "plan"),
         latestDocument(env, pid, "draft"),
+        latestDocument(env, pid, "draft-json"),
       ]);
       return json({
         course: {
@@ -60,6 +70,7 @@ export async function handleInternal(request, env, url) {
           draftVersion: draftDoc?.version || 0,
           planDoc: planDoc?.content || "",
           draftDoc: draftDoc?.content || "",
+          draftJson: draftJsonDoc?.content || "",
         },
         planThread: await listThread(env, pid, "plan"),
         draftThread: await listThread(env, pid, "draft"),

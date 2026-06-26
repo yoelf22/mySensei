@@ -248,6 +248,18 @@ export default {
       return html(renderCourseIndexHtml({ curriculum: courseToCurriculum(row), courseId: cm[1] }));
     }
 
+    const dlm = pathname.match(/^\/c\/([a-z0-9]+)\/download\/(pdf|docx|pptx)$/);
+    if (method === "GET" && dlm) {
+      const email = await sessionEmail(request, env);
+      if (!email) return json({ error: "unauthorized" }, 401);
+      const course = await getCourse(env, dlm[1]);
+      if (!course || course.owner_email !== email) return new Response("not found", { status: 404 });
+      const obj = await env.DOCS.get(`${dlm[1]}/${dlm[2]}`);
+      if (!obj) return new Response("not ready", { status: 404 });
+      const TYPES = { pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation" };
+      return new Response(obj.body, { headers: { "Content-Type": TYPES[dlm[2]], "Content-Disposition": `attachment; filename="paper.${dlm[2]}"` } });
+    }
+
     const pm = pathname.match(/^\/c\/([a-z0-9]+)\/(.+)$/);
     if (method === "GET" && pm) {
       const cid = pm[1], slug = pm[2];

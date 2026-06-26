@@ -40,6 +40,7 @@ async function main() {
 
   const version = (proj.course.draftVersion || 0) + 1;
   await addArtifact(COURSE_ID, { stage: "draft", type: "draft", version, content: paperText, citations: references });
+  await addArtifact(COURSE_ID, { stage: "draft", type: "draft-json", version, content: JSON.stringify({ paper, references }) });
 
   const curriculum = { ...proj.course, kind: "research", progress: { ...(proj.course.progress || {}), status: "draft-talk" } };
   await saveCourse(COURSE_ID, curriculum);

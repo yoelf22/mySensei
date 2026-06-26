@@ -79,6 +79,15 @@ export async function fetchProject(projectId) {
   return r.json();
 }
 
+export async function putFile(projectId, fmt, buffer, contentType) {
+  const r = await fetch(`${base()}/internal/project/${projectId}/file/${fmt}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token()}`, "Content-Type": contentType },
+    body: buffer,
+  });
+  if (!r.ok) throw new Error(`putFile ${projectId}/${fmt}: ${r.status}`);
+}
+
 export async function addArtifact(projectId, artifact) {
   const r = await fetch(`${base()}/internal/project/${projectId}/artifact`, {
     method: "POST",

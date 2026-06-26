@@ -26,6 +26,11 @@ export function buildDispatch(body) {
     return { event_type: "syllabus-adjust", client_payload: { courseId, direction } };
   }
 
+  if (type === "dialogue") return { event_type: "dialogue", client_payload: { courseId, stage: body.stage === "draft" ? "draft" : "plan" } };
+  if (type === "regenerate") return { event_type: body.stage === "draft" ? "paper-due" : "plan-due", client_payload: { courseId } };
+  if (type === "lock") return { event_type: body.stage === "draft" ? "finalize-due" : "paper-due", client_payload: { courseId } };
+  if (type === "deck") return { event_type: "deck-due", client_payload: { courseId } };
+
   const module = Number(body.module), attempt = Number(body.attempt) || 1, score = Number(body.score), total = Number(body.total);
   if (![module, score, total].every(Number.isInteger) || total <= 0 || score < 0 || score > total) return { error: "invalid result" };
   return { event_type: "quiz-result", client_payload: { courseId, module, attempt, score, total, missed: Array.isArray(body.missed) ? body.missed.map(String).slice(0, 20) : [] } };

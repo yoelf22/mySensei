@@ -13,3 +13,23 @@ describe("buildDispatch research", () => {
     expect(d.event_type).toBe("onboard");
   });
 });
+
+describe("buildDispatch research actions", () => {
+  it("regenerate plan → plan-due", () => {
+    expect(buildDispatch({ type: "regenerate", courseId: "abc", stage: "plan" }).event_type).toBe("plan-due");
+  });
+  it("lock plan → paper-due", () => {
+    expect(buildDispatch({ type: "lock", courseId: "abc", stage: "plan" }).event_type).toBe("paper-due");
+  });
+  it("lock draft → finalize-due", () => {
+    expect(buildDispatch({ type: "lock", courseId: "abc", stage: "draft" }).event_type).toBe("finalize-due");
+  });
+  it("deck → deck-due", () => {
+    expect(buildDispatch({ type: "deck", courseId: "abc" }).event_type).toBe("deck-due");
+  });
+  it("dialogue → dialogue with stage", () => {
+    const d = buildDispatch({ type: "dialogue", courseId: "abc", stage: "draft" });
+    expect(d.event_type).toBe("dialogue");
+    expect(d.client_payload.stage).toBe("draft");
+  });
+});

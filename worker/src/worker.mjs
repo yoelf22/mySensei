@@ -1,5 +1,5 @@
 // worker/src/worker.mjs
-import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers } from "./db.mjs";
+import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countActive, getPage, courseToCurriculum, addToAllowlist, listAllowlist, removeFromAllowlist, createDispute, countInvitesBy, createShare, getShare, claimShareUse, adminStats, listUsers, addArtifact } from "./db.mjs";
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
@@ -196,6 +196,15 @@ export default {
         const gh2 = await postDispatch(env, "dispute", { courseId: rec.courseId, disputeId: id });
         if (!gh2.ok) return json({ error: "dispatch failed", status: gh2.status }, 502, CORS);
         return json({ ok: true }, 200, CORS);
+      }
+      if (body.type === "dialogue") {
+        const stage = body.stage === "draft" ? "draft" : "plan";
+        const text = String(body.text || "").trim();
+        if (!text) return json({ error: "empty message" }, 400, CORS);
+        await addArtifact(env, { projectId: String(body.courseId), stage, type: "message", role: "user", content: text });
+      }
+      if (body.type === "lock") {
+        await setStatus(env, String(body.courseId), body.stage === "draft" ? "finalizing" : "drafting");
       }
       const d = buildDispatch(body);
       if (d.error) return json({ error: d.error }, 400, CORS);

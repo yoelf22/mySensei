@@ -75,18 +75,33 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(ch){retu
 function chart(series){
   if(!series.length) return "";
   var W=640,H=220,P=34;
+  var lines=[
+    {key:"users",label:"Users",color:"#1f6fb4"},
+    {key:"courses",label:"Courses",color:"#b4541f"},
+    {key:"lessons",label:"Lessons",color:"#2e7d4f"}
+  ];
   var xs=series.map(function(p){return Date.parse(p.date);});
   var minx=Math.min.apply(null,xs), maxx=Math.max.apply(null,xs);
-  var maxy=Math.max.apply(null,series.map(function(p){return p.total;}));
+  var maxy=0;
+  series.forEach(function(p){lines.forEach(function(l){if(p[l.key]>maxy)maxy=p[l.key];});});
   function X(t){return maxx===minx?(W/2):(P+(W-2*P)*(t-minx)/(maxx-minx));}
   function Y(v){return maxy===0?(H-P):(H-P-(H-2*P)*v/maxy);}
-  var pts=series.map(function(p){return X(Date.parse(p.date)).toFixed(1)+","+Y(p.total).toFixed(1);}).join(" ");
-  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Total courses started over time">'
+  var polys=lines.map(function(l){
+    var pts=series.map(function(p){return X(Date.parse(p.date)).toFixed(1)+","+Y(p[l.key]).toFixed(1);}).join(" ");
+    return '<polyline fill="none" stroke="'+l.color+'" stroke-width="2" points="'+pts+'"/>';
+  }).join("");
+  var last=series[series.length-1];
+  var legend=lines.map(function(l,i){
+    var x=P+i*150;
+    return '<rect x="'+x+'" y="'+(P-22)+'" width="10" height="10" fill="'+l.color+'"/>'
+      +'<text x="'+(x+15)+'" y="'+(P-13)+'" font-size="11" fill="#6b6457">'+l.label+' ('+last[l.key]+')</text>';
+  }).join("");
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Users, courses, and lessons over time">'
     +'<line x1="'+P+'" y1="'+(H-P)+'" x2="'+(W-P)+'" y2="'+(H-P)+'" stroke="#e7e1d5"/>'
-    +'<polyline fill="none" stroke="#b4541f" stroke-width="2" points="'+pts+'"/>'
+    +polys
     +'<text x="'+P+'" y="'+(H-10)+'" font-size="11" fill="#6b6457">'+esc(series[0].date)+'</text>'
     +'<text x="'+(W-P)+'" y="'+(H-10)+'" font-size="11" fill="#6b6457" text-anchor="end">'+esc(series[series.length-1].date)+'</text>'
-    +'<text x="'+P+'" y="'+(P-12)+'" font-size="11" fill="#6b6457">'+maxy+' total</text>'
+    +legend
     +'</svg>';
 }
 function render(d){

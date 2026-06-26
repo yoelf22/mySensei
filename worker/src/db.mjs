@@ -209,7 +209,7 @@ export async function listUsers(env) {
 
 export async function adminStats(env) {
   const { results } = await env.DB.prepare(
-    "SELECT subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
+    "SELECT owner_email, subject, status, created_at, progress FROM courses WHERE subject IS NOT NULL AND subject != '' ORDER BY created_at DESC",
   ).all();
   const courses = results.map((r) => {
     let lessons = 0;
@@ -220,15 +220,41 @@ export async function adminStats(env) {
     return { topic: r.subject, status: r.status, startedAt: r.created_at, lessons };
   });
 
-  const byDay = new Map();
+  // Daily increments for three metrics, keyed by YYYY-MM-DD.
+  const coursesByDay = new Map(); // a course's start day
+  const lessonsByDay = new Map(); // each delivered lesson's sentAt day
+  const firstSeen = new Map();    // owner_email → earliest day they appear
   for (const r of results) {
     const day = String(r.created_at).slice(0, 10);
-    byDay.set(day, (byDay.get(day) || 0) + 1);
+    coursesByDay.set(day, (coursesByDay.get(day) || 0) + 1);
+
+    const owner = norm(r.owner_email);
+    if (owner) {
+      const prev = firstSeen.get(owner);
+      if (!prev || day < prev) firstSeen.set(owner, day);
+    }
+
+    try {
+      const p = r.progress ? JSON.parse(r.progress) : null;
+      if (p && Array.isArray(p.delivered)) {
+        for (const d of p.delivered) {
+          const lday = String(d && d.sentAt ? d.sentAt : r.created_at).slice(0, 10);
+          lessonsByDay.set(lday, (lessonsByDay.get(lday) || 0) + 1);
+        }
+      }
+    } catch { /* malformed progress → skip its lessons */ }
   }
-  let running = 0;
-  const series = [...byDay.keys()].sort().map((date) => {
-    running += byDay.get(date);
-    return { date, total: running };
+  // New distinct users per day, from each owner's first-seen day.
+  const usersByDay = new Map();
+  for (const day of firstSeen.values()) usersByDay.set(day, (usersByDay.get(day) || 0) + 1);
+
+  const days = [...new Set([...coursesByDay.keys(), ...usersByDay.keys(), ...lessonsByDay.keys()])].sort();
+  let runUsers = 0, runCourses = 0, runLessons = 0;
+  const series = days.map((date) => {
+    runUsers += usersByDay.get(date) || 0;
+    runCourses += coursesByDay.get(date) || 0;
+    runLessons += lessonsByDay.get(date) || 0;
+    return { date, users: runUsers, courses: runCourses, lessons: runLessons };
   });
 
   const summary = {

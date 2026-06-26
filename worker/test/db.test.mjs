@@ -202,7 +202,10 @@ describe("adminStats", () => {
     await seed("a4", "", "draft", "2026-06-04T09:00:00Z"); // empty subject → excluded
     const s = await adminStats(env);
     expect(s.summary).toEqual({ started: 3, active: 1, paused: 1, done: 1 });
-    expect(s.series).toEqual([{ date: "2026-06-01", total: 2 }, { date: "2026-06-03", total: 3 }]);
+    expect(s.series).toEqual([
+      { date: "2026-06-01", users: 1, courses: 2, lessons: 0 },
+      { date: "2026-06-03", users: 1, courses: 3, lessons: 0 },
+    ]);
     expect(s.courses.length).toBe(3);
     expect(JSON.stringify(s)).not.toMatch(/@/); // never leaks an email
   });
@@ -226,7 +229,28 @@ describe("adminStats", () => {
     const byTopic = Object.fromEntries(s.courses.map((c) => [c.topic, c.lessons]));
     expect(byTopic.Chess).toBe(3);
     expect(byTopic.Go).toBe(0);
+    // Lessons with no sentAt fall back to the course's created_at day.
+    expect(s.series[s.series.length - 1].lessons).toBe(3);
     expect(JSON.stringify(s)).not.toMatch(/@/);
+  });
+
+  it("places delivered lessons on their sentAt day in the series", async () => {
+    await env.DB.exec("DELETE FROM courses;");
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, progress, created_at, updated_at) VALUES(?,?,?,?,?,?,?)",
+    ).bind("c1", "a@x.com", "active", "Chess", JSON.stringify({ delivered: [
+      { module: 1, sentAt: "2026-06-02T07:00:00Z" },
+      { module: 2, sentAt: "2026-06-04T07:00:00Z" },
+    ] }), "2026-06-01T10:00:00Z", "2026-06-01T10:00:00Z").run();
+    await env.DB.prepare(
+      "INSERT INTO courses(id, owner_email, status, subject, created_at, updated_at) VALUES(?,?,?,?,?,?)",
+    ).bind("c2", "b@x.com", "active", "Go", "2026-06-03T10:00:00Z", "2026-06-03T10:00:00Z").run();
+    const s = await adminStats(env);
+    const byDate = Object.fromEntries(s.series.map((p) => [p.date, p]));
+    expect(byDate["2026-06-01"]).toEqual({ date: "2026-06-01", users: 1, courses: 1, lessons: 0 });
+    expect(byDate["2026-06-02"]).toEqual({ date: "2026-06-02", users: 1, courses: 1, lessons: 1 });
+    expect(byDate["2026-06-03"]).toEqual({ date: "2026-06-03", users: 2, courses: 2, lessons: 1 });
+    expect(byDate["2026-06-04"]).toEqual({ date: "2026-06-04", users: 2, courses: 2, lessons: 2 });
   });
 });
 

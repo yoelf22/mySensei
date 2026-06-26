@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import { createCourse, getCourse, setKind, addArtifact, latestDocument, listThread } from "../src/db.mjs";
+import { createCourse, getCourse, setKind, addArtifact, latestDocument, listThread, saveCurriculum } from "../src/db.mjs";
 
 beforeEach(async () => {
   await env.DB.exec("DELETE FROM courses; DELETE FROM research_artifacts;");
@@ -41,6 +41,16 @@ describe("research artifacts store", () => {
     expect(await latestDocument(env, id, "plan")).toBe(null);
     await addArtifact(env, { projectId: id, stage: "plan", type: "plan", version: 1, content: "v1", citations: [{ title: "A", url: "http://a" }] });
     expect((await latestDocument(env, id, "plan")).citations[0].url).toBe("http://a");
+  });
+  it("saveCurriculum persists kind when provided", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "course");
+    await saveCurriculum(env, id, { subject: "T", kind: "research", progress: { status: "plan-talk" } });
+    expect((await getCourse(env, id)).kind).toBe("research");
+  });
+  it("saveCurriculum without kind leaves existing kind unchanged", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    await saveCurriculum(env, id, { subject: "T", progress: { status: "plan-talk" } });
+    expect((await getCourse(env, id)).kind).toBe("research");
   });
   it("listThread returns messages for a stage in order", async () => {
     const { id } = await createCourse(env, "me@x.com", "T", "", "research");

@@ -114,10 +114,10 @@ export async function saveCurriculum(env, id, c) {
   const assessmentCol = JSON.stringify({ ...(c.assessment || {}), placement: c.placement ?? null });
   const status = (c.progress && c.progress.status) || "draft";
   await env.DB.prepare(
-    `UPDATE courses SET subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
+    `UPDATE courses SET kind=COALESCE(?, kind), subject=?, angle=?, settings=?, status=?, start_level=?, level=?,
        research=?, assessment=?, outline=?, progress=?, syllabus=?, last_error=NULL, updated_at=? WHERE id=?`,
   ).bind(
-    c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
+    c.kind ?? null, c.subject || "", c.angle || "", JSON.stringify(c.settings || {}), status,
     c.startLevel ?? null, c.level ?? null, c.researchContext || "",
     assessmentCol, JSON.stringify(c.outline || []), JSON.stringify(c.progress || null),
     JSON.stringify(c.syllabus ?? null), now(), id,

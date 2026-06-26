@@ -5,6 +5,10 @@ export function buildDispatch(body) {
   if (!courseId) return { error: "missing courseId" };
 
   if (type === "onboard") {
+    if (body.kind === "research") {
+      if (!body.subject) return { error: "missing subject" };
+      return { event_type: "plan-due", client_payload: { courseId, subject: body.subject, angle: body.angle || "", settings: { language: body.language || "English", languageCode: body.languageCode || "en", educationLevel: body.educationLevel || "undergraduate", domain: body.domain || "other" } } };
+    }
     if (!body.subject) return { error: "missing subject" };
     // GitHub caps client_payload at 10 top-level properties, so the course
     // settings are nested under one `settings` key (keeps it to 4 top-level).

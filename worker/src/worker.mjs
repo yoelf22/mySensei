@@ -3,11 +3,11 @@ import { isAllowlisted, createCourse, listCourses, getCourse, setStatus, countAc
 import { renderOnboardHtml } from "../../lib/render-onboard.mjs";
 import { renderCourseIndexHtml } from "../../lib/render-course-index.mjs";
 import { handleInternal } from "./internal.mjs";
-import { signSession, verifySession, mintToken, consumeToken, sha256Hex, timingSafeEqual } from "./auth.mjs";
+import { signSession, verifySession, mintToken, consumeToken, tokenEmail, sha256Hex, timingSafeEqual } from "./auth.mjs";
 import { sendMagicLink, sendInvite } from "./email.mjs";
 import { getCookie, sessionCookie } from "./cookies.mjs";
 import { buildDispatch, buildDisputeRecord, postDispatch } from "./dispatch.mjs";
-import { loginPage, dashboardPage, verifyPage, sharePage, shareUnavailablePage, adminLoginPage, adminPage } from "./pages.mjs";
+import { loginPage, dashboardPage, verifyPage, expiredPage, sharePage, shareUnavailablePage, adminLoginPage, adminPage } from "./pages.mjs";
 import { runSweep } from "./sweep.mjs";
 
 const json = (obj, status = 200, extra = {}) =>
@@ -86,8 +86,12 @@ export default {
     }
     if (method === "POST" && pathname === "/auth/verify") {
       const form = await request.formData();
-      const consumed = await consumeToken(env, String(form.get("token") || ""));
-      if (!consumed) return new Response("This link is invalid or expired. Request a new one.", { status: 400 });
+      const rawToken = String(form.get("token") || "");
+      const consumed = await consumeToken(env, rawToken);
+      if (!consumed) {
+        // Used or expired: show a page that resends a fresh link in one click.
+        return new Response(expiredPage(rawToken), { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } });
+      }
       const { email, shareToken } = consumed;
       let location = "/dashboard";
       if (shareToken) {
@@ -99,6 +103,25 @@ export default {
       }
       const cookie = sessionCookie(await signSession(email, env.SESSION_SECRET));
       return new Response(null, { status: 302, headers: { Location: location, "Set-Cookie": cookie } });
+    }
+
+    // Resend a fresh sign-in link from an expired/used one. Possession of the
+    // old token authorizes the resend (bypassing the allowlist + owner special-
+    // case), and the new link is only ever emailed to the address on file.
+    if (method === "POST" && pathname === "/auth/resend") {
+      let rawToken = "";
+      try { const b = await request.json(); rawToken = String(b.token || ""); } catch {}
+      const info = await tokenEmail(env, rawToken.replace(/[^a-z0-9]/gi, ""));
+      if (info && info.email) {
+        let boundShare = null;
+        if (info.shareToken) {
+          const share = await getShare(env, info.shareToken);
+          if (share && share.uses < share.max_uses) boundShare = info.shareToken;
+        }
+        const token = await mintToken(env, info.email, boundShare);
+        await sendMagicLink(env, info.email, `${env.APP_BASE_URL}/auth/verify?token=${token}`);
+      }
+      return json({ ok: true }); // always 200 — no enumeration
     }
 
     if (pathname === "/api/courses") {

@@ -1,5 +1,6 @@
 // worker/src/internal.mjs
 import { getCourse, courseToCurriculum, saveCurriculum, putPage, setLastError, getDispute, resolveDispute, addArtifact as dbAddArtifact, listThread, latestDocument } from "./db.mjs";
+import { mintToken } from "./auth.mjs";
 
 export function internalOk(request, env) {
   return !!env.INTERNAL_TOKEN && request.headers.get("Authorization") === `Bearer ${env.INTERNAL_TOKEN}`;
@@ -10,6 +11,20 @@ const json = (obj, status = 200) =>
 
 // Handle an /internal/* request. Returns a Response, or null if the path is not internal.
 export async function handleInternal(request, env, url) {
+  // Mint a one-click sign-in link for a notification email (e.g. "your research
+  // plan is ready"). The GitHub Actions emailer can't reach D1 to mint a token
+  // itself, so it asks the worker over this INTERNAL_TOKEN-guarded endpoint.
+  if (url.pathname === "/internal/magic-link") {
+    if (!internalOk(request, env)) return json({ error: "unauthorized" }, 401);
+    if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
+    let body;
+    try { body = await request.json(); } catch { return json({ error: "invalid JSON" }, 400); }
+    const email = String(body.email || "").trim().toLowerCase();
+    if (!email) return json({ error: "missing email" }, 400);
+    const token = await mintToken(env, email);
+    return json({ url: `${env.APP_BASE_URL.replace(/\/+$/, "")}/auth/verify?token=${token}` });
+  }
+
   const dm = url.pathname.match(/^\/internal\/dispute\/([a-z0-9]+)$/);
   if (dm) {
     if (!internalOk(request, env)) return json({ error: "unauthorized" }, 401);

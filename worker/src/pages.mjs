@@ -38,6 +38,19 @@ export function verifyPage(token) {
 <form method="POST" action="/auth/verify"><input type="hidden" name="token" value="${t}"><p><button type="submit">Sign in</button></p></form>`);
 }
 
+export function expiredPage(token) {
+  // Shown when a sign-in link is used or older than 7 days. Offers a one-click
+  // resend by token — the fresh link is emailed to the address on file, so no
+  // re-typing and nothing sensitive is revealed on this page.
+  const t = String(token || "").replace(/[^a-z0-9]/gi, "");
+  return SHELL("mySensei — link expired", `<h1>This sign-in link has expired</h1>
+<p class="muted">Sign-in links are single-use and expire after 7 days.</p>
+<form id="r"><input type="hidden" name="token" value="${t}"><p><button type="submit">Email me a fresh link</button></p><p id="m" class="muted"></p></form>
+<script>document.getElementById("r").addEventListener("submit",function(e){e.preventDefault();
+fetch("/auth/resend",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:e.target.token.value})})
+.then(function(){document.getElementById("m").textContent="A fresh sign-in link is on its way to your inbox.";e.target.querySelector("button").disabled=true;});});</script>`);
+}
+
 export function sharePage(subject, token) {
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   return SHELL("mySensei — start a shared course", `<h1>Learn ${esc(subject)}</h1>

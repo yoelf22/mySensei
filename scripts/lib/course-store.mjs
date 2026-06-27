@@ -54,6 +54,20 @@ export function submitUrl() {
   return `${base()}/submit`;
 }
 
+// Ask the worker to mint a one-click sign-in link for this email, so a
+// notification email can drop the recipient straight onto the verify page
+// instead of the homepage's "type your email" form.
+export async function mintMagicLink(email) {
+  const r = await fetch(`${base()}/internal/magic-link`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!r.ok) throw new Error(`mintMagicLink: ${r.status}`);
+  const { url } = await r.json();
+  return url;
+}
+
 export async function fetchDispute(disputeId) {
   const r = await fetch(`${base()}/internal/dispute/${disputeId}`, {
     headers: { Authorization: `Bearer ${token()}` },

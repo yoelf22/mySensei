@@ -43,6 +43,16 @@ export async function mintToken(env, email, shareToken = null) {
   return token;
 }
 
+// Look up a token's email + share binding regardless of used/expired state.
+// Used by the resend flow: possession of an expired token proves the holder
+// was previously authorized, and a fresh link is only ever emailed to this
+// address — never shown — so it's safe to re-mint from an expired token.
+export async function tokenEmail(env, token) {
+  const row = await env.DB.prepare("SELECT email, share_token FROM magic_tokens WHERE token = ?").bind(token).first();
+  if (!row) return null;
+  return { email: row.email, shareToken: row.share_token || null };
+}
+
 export async function consumeToken(env, token) {
   const row = await env.DB.prepare("SELECT email, expires_at, share_token FROM magic_tokens WHERE token = ?").bind(token).first();
   if (!row || row.expires_at < now()) return null;

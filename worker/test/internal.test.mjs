@@ -4,7 +4,7 @@ import worker from "../src/worker.mjs";
 import { createCourse, getCourse } from "../src/db.mjs";
 
 const TOKEN = "tok-123";
-const E = { ...env, INTERNAL_TOKEN: TOKEN };
+const E = { ...env, INTERNAL_TOKEN: TOKEN, APP_BASE_URL: "https://app" };
 async function call(path, init) {
   const ctx = createExecutionContext();
   const res = await worker.fetch(new Request("https://app" + path, init), E, ctx);
@@ -14,6 +14,27 @@ async function call(path, init) {
 const auth = { Authorization: "Bearer " + TOKEN, "Content-Type": "application/json" };
 
 beforeEach(async () => { await env.DB.exec("DELETE FROM courses; DELETE FROM pages; DELETE FROM research_artifacts;"); });
+
+describe("internal magic-link minting", () => {
+  it("rejects without the internal token", async () => {
+    expect((await call(`/internal/magic-link`, { method: "POST", body: JSON.stringify({ email: "me@x.com" }) })).status).toBe(401);
+  });
+
+  it("mints a verify URL backed by a real token row", async () => {
+    await env.DB.exec("DELETE FROM magic_tokens;");
+    const res = await call(`/internal/magic-link`, { method: "POST", headers: auth, body: JSON.stringify({ email: "Me@X.com" }) });
+    expect(res.status).toBe(200);
+    const { url } = await res.json();
+    expect(url).toContain("/auth/verify?token=");
+    const tok = url.match(/token=([a-z0-9]+)/)[1];
+    const row = await env.DB.prepare("SELECT email FROM magic_tokens WHERE token = ?").bind(tok).first();
+    expect(row.email).toBe("me@x.com"); // normalized to lowercase
+  });
+
+  it("400s when email is missing", async () => {
+    expect((await call(`/internal/magic-link`, { method: "POST", headers: auth, body: JSON.stringify({}) })).status).toBe(400);
+  });
+});
 
 describe("internal API", () => {
   it("rejects a missing/bad token with 401", async () => {

@@ -3,18 +3,20 @@
 // Env: COURSE_ID, STAGE, ANTHROPIC_API_KEY, APP_BASE_URL, INTERNAL_TOKEN
 import { client, MODEL, structured } from "../lib/claude.mjs";
 import { renderProjectHtml } from "../lib/render-project.mjs";
-import { fetchProject, addArtifact, savePage, submitUrl } from "./lib/course-store.mjs";
+import { fetchProject, addArtifact, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
 
-// mySensei answers AND judges whether the work is solid enough to lock, so the
-// Lock button stays disabled until the mentor has no substantive objection left.
+// mySensei answers AND judges whether the work is solid enough to lock. The
+// verdict + a written "what's missing" are persisted so that when the author
+// clicks Lock, the worker can either proceed or show exactly what to fix.
 const REPLY_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
     reply: { type: "string", description: "One short, probing Socratic reply: challenge a weak assumption, expose a gap, or push the thesis to be sharper. A question or pointed observation. Do not rewrite the document." },
     readyToLock: { type: "boolean", description: "Your judgment as a tough but fair critic: true ONLY when the thesis is clear, defensible, and well-scoped enough to start writing, with no substantive objection remaining; false if any weak assumption, gap, or vagueness is still unresolved." },
+    issues: { type: "string", description: "If readyToLock is false, a short, specific explanation (a sentence or a few '- ' bullet lines) of what is missing or wrong and must be resolved before writing the paper. Empty string if readyToLock is true." },
   },
-  required: ["reply", "readyToLock"],
+  required: ["reply", "readyToLock", "issues"],
 };
 
 const COURSE_ID = process.env.COURSE_ID;
@@ -38,9 +40,12 @@ async function main() {
     REPLY_SCHEMA, 1024, MODEL);
   const replyText = String(out.reply || "").trim();
   const ready = !!out.readyToLock;
+  const issues = ready ? "" : String(out.issues || "").trim();
   await addArtifact(COURSE_ID, { stage: STAGE, type: "message", role: "mysensei", content: replyText });
 
   const fresh = await fetchProject(COURSE_ID);
+  // Persist the verdict so the worker can gate Lock without re-running the AI.
+  await saveCourse(COURSE_ID, { ...fresh.course, progress: { ...(fresh.course.progress || {}), readyToLock: ready, lockIssues: issues } });
   const html = renderProjectHtml({
     courseId: COURSE_ID, webhookUrl: submitUrl(), stage: STAGE, status: fresh.course.status,
     document: docText, thread: STAGE === "plan" ? fresh.planThread : fresh.draftThread,

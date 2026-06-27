@@ -227,6 +227,14 @@ export default {
         await addArtifact(env, { projectId: String(body.courseId), stage, type: "message", role: "user", content: text });
       }
       if (body.type === "lock") {
+        // mySensei gates locking: it only proceeds when the last dialogue turn
+        // judged the work ready. Otherwise return its written critique so the
+        // author sees exactly what's missing — nothing is locked or dispatched.
+        const course = await getCourse(env, String(body.courseId || ""));
+        const prog = (course && course.progress) || {};
+        if (!prog.readyToLock) {
+          return json({ ok: true, locked: false, issues: String(prog.lockIssues || "") }, 200, CORS);
+        }
         await setStatus(env, String(body.courseId), body.stage === "draft" ? "finalizing" : "drafting");
       }
       const d = buildDispatch(body);

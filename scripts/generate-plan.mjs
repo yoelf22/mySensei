@@ -28,7 +28,7 @@ async function main() {
   await addArtifact(COURSE_ID, { stage: "plan", type: "plan", version, content: planToText(plan), citations: [] });
 
   // Persist state: kind=research, status=plan-talk, keep subject/angle/settings.
-  const curriculum = { ...proj.course, subject, angle, settings, kind: "research", progress: { ...(proj.course.progress || {}), status: "plan-talk" } };
+  const curriculum = { ...proj.course, subject, angle, settings, kind: "research", progress: { ...(proj.course.progress || {}), status: "plan-talk", readyToLock: false, lockIssues: "" } };
   await saveCourse(COURSE_ID, curriculum);
 
   const html = renderProjectHtml({

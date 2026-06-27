@@ -25,16 +25,37 @@ describe("research /submit routes", () => {
     expect(body.event_type).toBe("dialogue");
   });
 
-  it("lock plan sets status to drafting", async () => {
-    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+  async function lock(id) {
     const ctx = createExecutionContext();
     const res = await worker.fetch(new Request("https://app/submit", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "lock", courseId: id, stage: "plan" }),
     }), E, ctx);
     await waitOnExecutionContext(ctx);
+    return res;
+  }
+
+  it("lock is held off (no status change) until mySensei judges the plan ready", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    await env.DB.prepare("UPDATE courses SET progress=? WHERE id=?")
+      .bind(JSON.stringify({ status: "plan-talk", readyToLock: false, lockIssues: "Thesis is too vague." }), id).run();
+    const res = await lock(id);
     expect(res.ok).toBe(true);
-    const course = await getCourse(env, id);
-    expect(course.status).toBe("drafting");
+    const out = await res.json();
+    expect(out.locked).toBe(false);
+    expect(out.issues).toBe("Thesis is too vague.");
+    expect((await getCourse(env, id)).status).not.toBe("drafting");
+    expect(globalThis.fetch).not.toHaveBeenCalled(); // nothing dispatched
+  });
+
+  it("lock proceeds to drafting once mySensei marks it ready", async () => {
+    const { id } = await createCourse(env, "me@x.com", "T", "", "research");
+    await env.DB.prepare("UPDATE courses SET progress=? WHERE id=?")
+      .bind(JSON.stringify({ status: "plan-talk", readyToLock: true, lockIssues: "" }), id).run();
+    const res = await lock(id);
+    expect(res.ok).toBe(true);
+    expect((await getCourse(env, id)).status).toBe("drafting");
+    const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+    expect(body.event_type).toBe("paper-due"); // paper generation dispatched
   });
 });

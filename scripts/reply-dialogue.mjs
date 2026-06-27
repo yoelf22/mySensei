@@ -14,7 +14,7 @@ const REPLY_SCHEMA = {
   properties: {
     reply: { type: "string", description: "One short, probing Socratic reply: challenge a weak assumption, expose a gap, or push the thesis to be sharper. A question or pointed observation. Do not rewrite the document." },
     readyToLock: { type: "boolean", description: "Your judgment as a tough but fair critic: true ONLY when the thesis is clear, defensible, and well-scoped enough to start writing, with no substantive objection remaining; false if any weak assumption, gap, or vagueness is still unresolved." },
-    issues: { type: "string", description: "If readyToLock is false, a short, specific explanation (a sentence or a few '- ' bullet lines) of what is missing or wrong and must be resolved before writing the paper. Empty string if readyToLock is true." },
+    issues: { type: "string", description: "If readyToLock is false, the specific open questions the author must ANSWER (and gaps they must fix) before this can be written — as '- ' bullet lines, each one concrete and directly answerable (e.g. '- Which single thesis are you defending: X or Y?'). Empty string if readyToLock is true." },
   },
   required: ["reply", "readyToLock", "issues"],
 };

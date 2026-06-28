@@ -3,7 +3,7 @@
 // sources), assembles the paper + references, appends a draft artifact, sets
 // status draft-talk, and re-renders the project page.
 // Env: COURSE_ID, ANTHROPIC_API_KEY, APP_BASE_URL, INTERNAL_TOKEN
-import { heavyClient, HEAVY_MODEL, researchWithSources, structured } from "../lib/claude.mjs";
+import { client, MODEL, researchWithSources, structured } from "../lib/claude.mjs";
 import { PAPER_OUTLINE_SCHEMA, outlinePrompt, sectionPrompt, conclusionPrompt, paperToText } from "../lib/paper-model.mjs";
 import { renderProjectHtml } from "../lib/render-project.mjs";
 import { fetchProject, addArtifact, saveCourse, savePage, submitUrl } from "./lib/course-store.mjs";
@@ -19,21 +19,31 @@ async function main() {
   const planText = proj.course.planDoc || "";
   const thread = proj.draftThread || [];
 
-  const c = heavyClient();
-  const outline = await structured(c, outlinePrompt({ planText, settings, thread }), PAPER_OUTLINE_SCHEMA, 4000, HEAVY_MODEL);
+  // Sonnet 4.6 for the write-up (fast); planning already ran on the heavy model.
+  const c = client();
+  console.log("outlining the paper...");
+  const outline = await structured(c, outlinePrompt({ planText, settings, thread }), PAPER_OUTLINE_SCHEMA, 4000, MODEL);
 
   const sections = [];
   const references = [];
   const seen = new Set();
   const collect = (sources) => { for (const s of sources) if (!seen.has(s.url)) { seen.add(s.url); references.push(s); } };
-  let priorText = "";
-  for (const heading of outline.headings || []) {
-    const { text, sources } = await researchWithSources(c, sectionPrompt({ subject, settings, planText, heading, priorText, thread }), { model: HEAVY_MODEL });
+  // Bound the job: cap sections and enforce an overall budget so it fails loudly
+  // (the workflow's report-failure step emails) instead of hanging silently.
+  const headings = (outline.headings || []).slice(0, 6);
+  const deadline = Date.now() + (Number(process.env.PAPER_BUDGET_MS) || 15 * 60 * 1000);
+  let priorText = "", n = 0;
+  for (const heading of headings) {
+    n += 1;
+    if (Date.now() > deadline) throw new Error(`paper generation exceeded its time budget at section ${n}/${headings.length}`);
+    console.log(`section ${n}/${headings.length}: ${heading}`);
+    const { text, sources } = await researchWithSources(c, sectionPrompt({ subject, settings, planText, heading, priorText, thread }), { model: MODEL });
     sections.push({ heading, body: text });
     collect(sources);
     priorText += `\n\n${heading}\n${text}`;
   }
-  const { text: conclusion, sources: concSources } = await researchWithSources(c, conclusionPrompt({ subject, settings, planText, bodyText: priorText, thread }), { model: HEAVY_MODEL });
+  console.log("writing the conclusion...");
+  const { text: conclusion, sources: concSources } = await researchWithSources(c, conclusionPrompt({ subject, settings, planText, bodyText: priorText, thread }), { model: MODEL });
   collect(concSources);
 
   const paper = { title: outline.title || subject, subtitle: outline.subtitle || "", abstract: outline.abstract || "", sections, conclusion };

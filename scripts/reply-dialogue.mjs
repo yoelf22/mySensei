@@ -14,7 +14,7 @@ const REPLY_SCHEMA = {
   properties: {
     reply: { type: "string", description: "One short, conversational line reacting to the author's latest message (acknowledge progress, or note the key tension). The detailed questions go in 'issues', not here. Do not rewrite the document." },
     readyToLock: { type: "boolean", description: "Your judgment as a tough but fair critic: true ONLY when the thesis is clear, defensible, and well-scoped enough to start writing, with no substantive objection remaining; false if any weak assumption, gap, or vagueness is still unresolved." },
-    issues: { type: "string", description: "The COMPLETE current list of open questions the author must ANSWER before this can be written — ALL of them, not one at a time, refreshed each turn: drop any the latest answers resolved and add any new ones they raised. Format as '- ' bullet lines, each concrete and directly answerable (e.g. '- Which single thesis are you defending: X or Y?'). Empty string only if readyToLock is true." },
+    issues: { type: "string", description: "The 1-2 MOST important open questions the author must answer before this can be written — only the few that genuinely matter, refreshed each turn (drop resolved ones, add newly critical ones). Never an exhaustive list. Format as '- ' bullet lines, each concrete and directly answerable (e.g. '- Which single thesis are you defending: X or Y?'). Empty string if readyToLock is true." },
   },
   required: ["reply", "readyToLock", "issues"],
 };
@@ -30,16 +30,23 @@ async function main() {
   const docType = STAGE === "plan" ? "plan" : "draft";
   const docText = proj.course[docType + "Doc"] || "";
 
+  // Cut to the chase: at most 2 rounds of questions. After the author's 2nd
+  // reply, mySensei stops probing, makes reasonable assumptions, and lets them lock.
+  const userTurns = thread.filter((m) => m.role === "user").length;
+  const finalRound = userTurns >= 2;
+  const guidance = finalRound
+    ? `This is the FINAL round — do NOT ask any more questions. Reply by confirming you now have enough to write a strong ${STAGE}, briefly noting any reasonable assumptions you'll make for anything still unresolved. Set readyToLock true and issues empty.`
+    : `Be decisive and brief: surface only the 1-2 MOST important open questions — never an exhaustive list — so the author can resolve them in one pass.`;
+
   const convo = thread.map((m) => `${m.role === "user" ? "Author" : "You"}: ${m.content}`).join("\n");
   const c = client();
   const out = await structured(c,
-    `You are a Socratic research mentor. Here is the current ${STAGE}:\n---\n${docText}\n---\n` +
-    `Conversation so far:\n${convo}\n\n` +
-    `Reply with a short conversational line, then list the COMPLETE set of open questions the author still needs to answer to make the ${STAGE} solid enough to lock — all of them at once, refreshed for what's now answered or newly raised — and judge whether it's ready. ` +
-    `Do not rewrite the ${STAGE}; that happens when the author hits Regenerate.`,
+    `You are a sharp, efficient research mentor — not a pedant who drags things out. Here is the current ${STAGE}:\n---\n${docText}\n---\n` +
+    `Conversation so far:\n${convo}\n\n${guidance}\n` +
+    `Reply with a short conversational line, set 'issues' to the current open questions (or empty), and judge readiness. Do not rewrite the ${STAGE}; that happens when the author hits Regenerate.`,
     REPLY_SCHEMA, 1024, MODEL);
   const replyText = String(out.reply || "").trim();
-  const ready = !!out.readyToLock;
+  const ready = finalRound ? true : !!out.readyToLock;
   const issues = ready ? "" : String(out.issues || "").trim();
   await addArtifact(COURSE_ID, { stage: STAGE, type: "message", role: "mysensei", content: replyText });
 

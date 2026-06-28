@@ -12,9 +12,9 @@ const REPLY_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    reply: { type: "string", description: "One short, probing Socratic reply: challenge a weak assumption, expose a gap, or push the thesis to be sharper. A question or pointed observation. Do not rewrite the document." },
+    reply: { type: "string", description: "One short, conversational line reacting to the author's latest message (acknowledge progress, or note the key tension). The detailed questions go in 'issues', not here. Do not rewrite the document." },
     readyToLock: { type: "boolean", description: "Your judgment as a tough but fair critic: true ONLY when the thesis is clear, defensible, and well-scoped enough to start writing, with no substantive objection remaining; false if any weak assumption, gap, or vagueness is still unresolved." },
-    issues: { type: "string", description: "If readyToLock is false, the specific open questions the author must ANSWER (and gaps they must fix) before this can be written — as '- ' bullet lines, each one concrete and directly answerable (e.g. '- Which single thesis are you defending: X or Y?'). Empty string if readyToLock is true." },
+    issues: { type: "string", description: "The COMPLETE current list of open questions the author must ANSWER before this can be written — ALL of them, not one at a time, refreshed each turn: drop any the latest answers resolved and add any new ones they raised. Format as '- ' bullet lines, each concrete and directly answerable (e.g. '- Which single thesis are you defending: X or Y?'). Empty string only if readyToLock is true." },
   },
   required: ["reply", "readyToLock", "issues"],
 };
@@ -35,7 +35,7 @@ async function main() {
   const out = await structured(c,
     `You are a Socratic research mentor. Here is the current ${STAGE}:\n---\n${docText}\n---\n` +
     `Conversation so far:\n${convo}\n\n` +
-    `Respond with ONE short, probing reply — challenge a weak assumption, expose a gap, or push the thesis to be sharper — and judge whether the ${STAGE} is now solid enough to lock and start writing. ` +
+    `Reply with a short conversational line, then list the COMPLETE set of open questions the author still needs to answer to make the ${STAGE} solid enough to lock — all of them at once, refreshed for what's now answered or newly raised — and judge whether it's ready. ` +
     `Do not rewrite the ${STAGE}; that happens when the author hits Regenerate.`,
     REPLY_SCHEMA, 1024, MODEL);
   const replyText = String(out.reply || "").trim();
@@ -49,7 +49,7 @@ async function main() {
   const html = renderProjectHtml({
     courseId: COURSE_ID, webhookUrl: submitUrl(), stage: STAGE, status: fresh.course.status,
     document: docText, thread: STAGE === "plan" ? fresh.planThread : fresh.draftThread,
-    languageCode: (fresh.course.settings || {}).languageCode || "en", ready,
+    languageCode: (fresh.course.settings || {}).languageCode || "en", ready, openQuestions: issues,
   });
   await savePage(COURSE_ID, "project", html);
   console.log(`Socratic reply added for ${COURSE_ID} (${STAGE}).`);
